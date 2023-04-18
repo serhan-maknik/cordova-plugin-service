@@ -1,6 +1,8 @@
 # cordova-plugin-service
 
+   ```
    cordova plugin add cordova-plugin-service
+   ```
 
 ```html
 <meta http-equiv="Content-Security-Policy"
