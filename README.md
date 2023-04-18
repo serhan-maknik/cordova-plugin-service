@@ -2,6 +2,12 @@
 
 cordova plugin add C:\Users\USER\Downloads\cordova-plugin-service\cordova-plugin-service
 
+```html
+<meta http-equiv="Content-Security-Policy"
+        content=" style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+
+```
+
 ## javascript
 
 ```js
