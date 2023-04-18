@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin 
+    id="cordova-plugin-service" 
+    version="1.0.0" 
+    xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+>
+    <name>ServicePlugin</name>
+    <js-module name="ServicePlugin" src="www/index.js">
+        <clobbers target="ServicePlugin"/>
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="ServicePlugin">
+                <param name="android-package" value="cordova.plugin.service.ServicePlugin"/>
+            </feature>
+        </config-file>
+		
+		<config-file target="AndroidManifest.xml" parent="/*">
+		     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+			<uses-permission android:name="android.permission.VIBRATE" />
+			<uses-permission android:name="android.permission.WAKE_LOCK" />
+			<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+			<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+			<uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+			<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+		</config-file>
+		
+        <config-file target="AndroidManifest.xml" parent="application">
+		
+				<service android:enabled="true" android:exported="false" android:name="cordova.plugin.service.EndlessService">
+			</service>
+			<receiver android:enabled="true" android:exported="false" android:name="cordova.plugin.service.StartReceiver">
+				<intent-filter>
+					<action android:name="android.intent.action.BOOT_COMPLETED" />
+				</intent-filter>
+			</receiver>
+			
+		</config-file>
+        <source-file src="src/android/ServicePlugin.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+        <source-file src="src/android/Actions.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+        <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+        <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+        <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+    </platform>
+
+    <platform name="ios">
+        <config-file parent="/*" target="config.xml">
+            <feature name="ServicePlugin">
+                <param name="ios-package" value="ServicePlugin"/>
+            </feature>
+        </config-file>
+        <source-file src="src/ios/ServicePluginPlugin.swift"/>
+        <source-file src="src/ios/ServicePlugin.swift"/>
+    </platform>
+
+    <platform name="browser">
+        <js-module src="src/browser/ServicePlugin.js" name="browserServicePlugin">
+            <clobbers target="ServicePlugin"/>
+        </js-module>
+    </platform>
+
+</plugin>

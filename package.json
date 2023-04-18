@@ -1,0 +1,19 @@
+{
+  "name": "cordova-plugin-service",
+  "version": "1.0.0",
+  "main": "www/index.js",
+  "types": "index.d.ts",
+  "description": "cordova background service plugin",
+  "cordova": {
+    "id": "cordova-plugin-service",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Serhan Maknik",
+  "license": "ISC"
+}
