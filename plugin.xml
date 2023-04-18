@@ -18,7 +18,7 @@
         </config-file>
 		
 		<config-file target="AndroidManifest.xml" parent="/*">
-		     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+		        <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 			<uses-permission android:name="android.permission.VIBRATE" />
 			<uses-permission android:name="android.permission.WAKE_LOCK" />
 			<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -29,15 +29,17 @@
 		
         <config-file target="AndroidManifest.xml" parent="application">
 		
-				<service android:enabled="true" android:exported="false" android:name="cordova.plugin.service.EndlessService">
-			</service>
-			<receiver android:enabled="true" android:exported="false" android:name="cordova.plugin.service.StartReceiver">
-				<intent-filter>
-					<action android:name="android.intent.action.BOOT_COMPLETED" />
-				</intent-filter>
-			</receiver>
-			
-		</config-file>
+		<service android:enabled="true" android:exported="false" android:name="cordova.plugin.service.EndlessService">
+		</service>
+		
+		<receiver android:enabled="true" android:exported="false" android:name="cordova.plugin.service.StartReceiver">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+		</receiver>
+		
+	</config-file>
+	    
         <source-file src="src/android/ServicePlugin.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
         <source-file src="src/android/Actions.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
         <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
