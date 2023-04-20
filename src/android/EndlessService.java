@@ -26,7 +26,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
-import cordova.plugin.service.ServicePlugin;
+import cordova.plugin.service.BackgroundService;
 
 
 public class EndlessService extends Service implements SensorEventListener{
@@ -371,7 +371,7 @@ public class EndlessService extends Service implements SensorEventListener{
     }
 
     private Notification createNotification() {
-        Intent intent = new Intent(this, ServicePlugin.class);
+        Intent intent = new Intent(this, BackgroundService.class);
 
         final String notificationChannelId ="ENDLESS SERVICE CHANNEL";
         NotificationManager notificationManager =
@@ -394,14 +394,14 @@ public class EndlessService extends Service implements SensorEventListener{
         Notification notificationBuilder = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             notificationBuilder = new Notification.Builder(this, notificationChannelId)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",ServicePlugin.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",BackgroundService.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent).build();
         }else{
             notificationBuilder = new Notification.Builder(this)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",ServicePlugin.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",BackgroundService.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)

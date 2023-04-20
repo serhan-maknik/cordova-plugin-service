@@ -1,7 +1,7 @@
-declare const ServicePlugin:ServicePlugin;
+declare const BackgroundService:BackgroundService;
 
 
-interface ServicePlugin {
+interface BackgroundService {
     start(
         data:any,
         successCallback:()=>void,

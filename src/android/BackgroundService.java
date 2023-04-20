@@ -28,7 +28,7 @@ import static android.content.Context.ALARM_SERVICE;
 /**
  * This class echoes a string called from JavaScript.
  */
-public class ServicePlugin extends CordovaPlugin {
+public class BackgroundService extends CordovaPlugin {
 
     static Context context;
     static protected Resources resources;
@@ -81,7 +81,7 @@ public class ServicePlugin extends CordovaPlugin {
     }
 
     static protected int getResourceId(String type,String name){
-        return resources.getIdentifier(name,type,ServicePlugin.packagename);
+        return resources.getIdentifier(name,type,BackgroundService.packagename);
     }
 
 }

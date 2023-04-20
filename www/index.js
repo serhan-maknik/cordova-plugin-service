@@ -6,9 +6,9 @@ module.exports={
         const obj={
             data:data
         };
-        exec(successCallback,errorCallback,"ServicePlugin","startService",[obj]);
+        exec(successCallback,errorCallback,"BackgroundService","startService",[obj]);
     },
     stop:(successCallback,errorCallback)=>{
-        exec(successCallback,errorCallback,"ServicePlugin","stopService",[]);
+        exec(successCallback,errorCallback,"BackgroundService","stopService",[]);
     },
 }

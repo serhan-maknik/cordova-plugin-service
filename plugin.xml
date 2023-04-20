@@ -5,15 +5,15 @@
     xmlns="http://apache.org/cordova/ns/plugins/1.0" 
     xmlns:android="http://schemas.android.com/apk/res/android"
 >
-    <name>ServicePlugin</name>
-    <js-module name="ServicePlugin" src="www/index.js">
-        <clobbers target="ServicePlugin"/>
+    <name>BackgroundService</name>
+    <js-module name="BackgroundService" src="www/index.js">
+        <clobbers target="BackgroundService"/>
     </js-module>
 
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
-            <feature name="ServicePlugin">
-                <param name="android-package" value="cordova.plugin.service.ServicePlugin"/>
+            <feature name="BackgroundService">
+                <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
             </feature>
         </config-file>
 		
@@ -40,26 +40,26 @@
 		
 	</config-file>
 	    
-        <source-file src="src/android/ServicePlugin.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
-        <source-file src="src/android/Actions.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
-        <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
-        <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
-        <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/ServicePlugin"/>
+        <source-file src="src/android/BackgroundService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/Actions.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
     </platform>
 
     <platform name="ios">
         <config-file parent="/*" target="config.xml">
-            <feature name="ServicePlugin">
-                <param name="ios-package" value="ServicePlugin"/>
+            <feature name="BackgroundService">
+                <param name="ios-package" value="BackgroundService"/>
             </feature>
         </config-file>
-        <source-file src="src/ios/ServicePluginPlugin.swift"/>
-        <source-file src="src/ios/ServicePlugin.swift"/>
+        <source-file src="src/ios/BackgroundServicePlugin.swift"/>
+        <source-file src="src/ios/BackgroundService.swift"/>
     </platform>
 
     <platform name="browser">
-        <js-module src="src/browser/ServicePlugin.js" name="browserServicePlugin">
-            <clobbers target="ServicePlugin"/>
+        <js-module src="src/browser/BackgroundService.js" name="browserBackgroundService">
+            <clobbers target="BackgroundService"/>
         </js-module>
     </platform>
 
