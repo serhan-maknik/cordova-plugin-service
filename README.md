@@ -18,7 +18,7 @@
 
 ```js
 function start(){
-    ServicePlugin.start('start',function(a){
+    BackgroundService.start('start',function(a){
         console.log(a);
     },
     function(a){
@@ -27,7 +27,7 @@ function start(){
 }
 
 function stop(){
-    ServicePlugin.stop('stop',function(a){
+    BackgroundService.stop('stop',function(a){
         console.log(a);
     },
     function(a){
