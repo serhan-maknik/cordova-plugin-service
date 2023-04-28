@@ -38,6 +38,7 @@
 			</intent-filter>
 		</receiver>
 		
+
 	</config-file>
 	    
         <source-file src="src/android/BackgroundService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
@@ -45,6 +46,13 @@
         <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/ApiService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+
+        <framework src="com.squareup.retrofit2:retrofit:2.9.0" />
+		<framework src="com.squareup.retrofit2:converter-gson:2.5.0" />
+		<framework src="com.squareup.okhttp3:logging-interceptor:4.10.0" />
+
+
     </platform>
 
     <platform name="ios">

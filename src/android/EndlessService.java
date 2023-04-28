@@ -1,5 +1,6 @@
 package cordova.plugin.service;
 
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -24,17 +25,28 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Objects;
 
-import cordova.plugin.service.BackgroundService;
-
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class EndlessService extends Service implements SensorEventListener{
-     boolean isServiceStarted = false;
+    boolean isServiceStarted = false;
     PowerManager pm ;
     PowerManager.WakeLock wakeLock;
     private SensorManager mSensorManager;
-     Vibrator vibrator;
+    Vibrator vibrator;
     VibrationEffect vibrationEffect1;
 
     private static final int SHAKE_INTERVAL = 100; // ölçüm aralığı (ms)
@@ -100,10 +112,10 @@ public class EndlessService extends Service implements SensorEventListener{
             String action = intent.getAction();
 
             Log.d("SERSER","action: "+action);
-            if(cordova.plugin.service.Actions.START.name()== action){
-               startService();
-            }else if(cordova.plugin.service.Actions.STOP.name()== action){
-               stopService();
+            if(Actions.START.name()== action){
+                startService();
+            }else if(Actions.STOP.name()== action){
+                stopService();
             }else{
                 Log.d("SERVİCE","This should never happen. No action in the received intent");
             }
@@ -178,7 +190,7 @@ public class EndlessService extends Service implements SensorEventListener{
 
                 // Log.d("SERSER","yRotationSpeed: "+yRotationSpeed);
                 //        Log.d("SERSER","XRotationDegrees: "+xRotationDegrees);
-           //     Log.d("SERSER","yRotationDegrees: "+yRotationDegrees);
+                //     Log.d("SERSER","yRotationDegrees: "+yRotationDegrees);
 
                 //  Log.d("SERSER","degree fark: "+Math.abs(xRotationDegrees - lastXRotation));
                 if (Math.abs(yRotationDegrees - lastYRotation) > ANGLE_THRESHOLD
@@ -191,6 +203,7 @@ public class EndlessService extends Service implements SensorEventListener{
                     if (shakeCount >= COUNT_THRESHOLD && yRotationSpeed > SPEED_THRESHOLD ) {
                         //      Toast.makeText(this, "Y ekseni etrafındaki dönüş açısı çok hızlı değişiyor!", Toast.LENGTH_SHORT).show();
                         vibrate();
+                        requestPost("Shake");
                         isOk = false;
                         shakeCount = 0;
                     } else {
@@ -304,6 +317,56 @@ public class EndlessService extends Service implements SensorEventListener{
         }
     }
 
+    private void requestPost(String name){
+        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build();
+        String BASE_URL = "http://192.168.1.5:3000";
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        HashMap<String, String> map = new HashMap<>();
+        map.put("userId", "12");
+        map.put("name", "Serhan");
+
+        ApiService apiService = retrofit.create(ApiService.class);
+
+        Call<ResponseBody> call = apiService.postData(map);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        String responseString = response.body().string();
+                        try {
+                            JSONObject jObj = new JSONObject(responseString);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        // responseString ile cevap verisini kullanabilirsiniz
+                        Log.d("SERSER","res: "+responseString );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    // Hata durumlarında yapılacak işlemler
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // İstek başarısız olduysa yapılacak işlemler
+            }
+        });
+    }
+
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -317,15 +380,15 @@ public class EndlessService extends Service implements SensorEventListener{
     public void onDestroy() {
         super.onDestroy();
         sensorManager.unregisterListener(this);
-        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
-        tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
+        ServiceTracker tracker = new ServiceTracker(this);
+        tracker.setServiceState(ServiceState.STOPPED);
         Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-       Intent restartServiceIntent = new Intent(getApplicationContext(),EndlessService.class);
+        Intent restartServiceIntent = new Intent(getApplicationContext(),EndlessService.class);
         restartServiceIntent.setPackage(getPackageName());
         PendingIntent restartServicePendingIntent = PendingIntent.getService(this,1,restartServiceIntent,PendingIntent.FLAG_IMMUTABLE);
         getApplicationContext().getSystemService(Context.ALARM_SERVICE);
@@ -340,8 +403,8 @@ public class EndlessService extends Service implements SensorEventListener{
         Log.d("SERVICE","Starting the foreground service task");
         Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show();
         isServiceStarted = true;
-        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
-        tracker.setServiceState(cordova.plugin.service.ServiceState.STARTED);
+        ServiceTracker tracker = new ServiceTracker(this);
+        tracker.setServiceState(ServiceState.STARTED);
 
         pm= (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"EndlessService::lock");
@@ -366,12 +429,12 @@ public class EndlessService extends Service implements SensorEventListener{
         }
 
         isServiceStarted = false;
-        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
-        tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
+        ServiceTracker tracker = new ServiceTracker(this);
+        tracker.setServiceState(ServiceState.STOPPED);
     }
 
     private Notification createNotification() {
-        Intent intent = new Intent(this, BackgroundService.class);
+        Intent intent = new Intent(this, MainActivity.class);
 
         final String notificationChannelId ="ENDLESS SERVICE CHANNEL";
         NotificationManager notificationManager =
@@ -394,14 +457,14 @@ public class EndlessService extends Service implements SensorEventListener{
         Notification notificationBuilder = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             notificationBuilder = new Notification.Builder(this, notificationChannelId)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",BackgroundService.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",MainActivity.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent).build();
         }else{
             notificationBuilder = new Notification.Builder(this)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",BackgroundService.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",MainActivity.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)
