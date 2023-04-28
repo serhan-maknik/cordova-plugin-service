@@ -94,10 +94,23 @@ public class EndlessService extends Service implements SensorEventListener{
         return null;
     }
 
+    String url;
+    JSONObject header;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("SERSER","onStartCommand"+intent.getAction());
-        COUNT_THRESHOLD = intent.getIntExtra("leftSensitivity",3);
+        //     COUNT_THRESHOLD = intent.getIntExtra("leftSensitivity",3);
+
+        String message = intent.getStringExtra("message");
+        try {
+            JSONObject data  = new JSONObject(message);
+            url = data.getString("url");
+            header = data.getJSONObject("header");
+            JSONObject body = data.getJSONObject("body");
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -334,9 +347,9 @@ public class EndlessService extends Service implements SensorEventListener{
         map.put("userId", "12");
         map.put("name", "Serhan");
 
-        ApiService apiService = retrofit.create(ApiService.class);
+        cordova.plugin.service.ApiService apiService = retrofit.create(cordova.plugin.service.ApiService.class);
 
-        Call<ResponseBody> call = apiService.postData(map);
+        Call<ResponseBody> call = apiService.postData(header.toString(),map);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

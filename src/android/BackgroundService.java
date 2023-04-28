@@ -36,13 +36,14 @@ public class BackgroundService extends CordovaPlugin {
 
     private ServiceTracker pref;
 
-
+    String message;
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        pref = new cordova.plugin.service.ServiceTracker(cordova.getActivity());
+        pref = new ServiceTracker(cordova.getActivity());
 
         if (action.equals("startService")) {
-             String message = args.getString(0);
+            message = args.getString(0);
+
             actionOnService(Actions.START);
             Log.d("SERSER","message: "+message);
             this.coolMethod(message, callbackContext);
@@ -71,6 +72,7 @@ public class BackgroundService extends CordovaPlugin {
             return;
         }
         Intent i = new Intent(cordova.getContext(),EndlessService.class);
+        i.putExtra("params",message);
         i.setAction(action.name());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
