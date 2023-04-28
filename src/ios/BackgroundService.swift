@@ -1,7 +1,7 @@
 import Foundation;
 
 
-class ServicePlugin:ServicePluginPlugin {
+class BackgroundService:BackgroundServicePlugin {
 
     @objc(coolAlert:)
     func coolAlert(command:CDVInvokedUrlCommand){
