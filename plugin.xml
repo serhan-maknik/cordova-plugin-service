@@ -16,6 +16,11 @@
                 <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
             </feature>
         </config-file>
+
+        <edit-config file="AndroidManifest.xml"  mode="merge" target="/manifest/application">
+           <application android:usesCleartextTraffic="true" />
+        </edit-config> 
+
 		<config-file target="AndroidManifest.xml" parent="/*">
 		    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 			<uses-permission android:name="android.permission.VIBRATE"/>
@@ -33,12 +38,15 @@
 		    	</intent-filter>
 		    </receiver>
 	    </config-file>
+
+
+       
         <source-file src="src/android/BackgroundService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/Actions.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/EndlessService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
-        <source-file src="src/android/ApiService.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/ServiceApi.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
 

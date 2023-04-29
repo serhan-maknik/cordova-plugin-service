@@ -25,10 +25,15 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -84,7 +89,6 @@ public class EndlessService extends Service implements SensorEventListener{
         public void run() {
             shakeCount = 0;
             isOk = true;
-            Log.d("SERSER","count sıfırlandı");
         }
     };
 
@@ -95,18 +99,22 @@ public class EndlessService extends Service implements SensorEventListener{
     }
 
     String url;
-    JSONObject header;
+    HashMap<String,String> headers;
+    HashMap<String,String> body;
+    String params;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("SERSER","onStartCommand"+intent.getAction());
-        //     COUNT_THRESHOLD = intent.getIntExtra("leftSensitivity",3);
-
-        String message = intent.getStringExtra("message");
+        params = intent.getStringExtra("params");
         try {
-            JSONObject data  = new JSONObject(message);
-            url = data.getString("url");
-            header = data.getJSONObject("header");
-            JSONObject body = data.getJSONObject("body");
+            if(params != null){
+                JSONObject message  = new JSONObject(params);
+                JSONObject data = message.getJSONObject("data");
+                url = data.getString("url");
+                JSONObject jsonHeader = data.getJSONObject("header");
+                headers = new Gson().fromJson(String.valueOf(jsonHeader), new TypeToken<HashMap<String, String>>(){}.getType());
+                JSONObject JsonBody = data.getJSONObject("body");
+                body = new Gson().fromJson(String.valueOf(JsonBody), new TypeToken<HashMap<String, String>>(){}.getType());
+            }
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -139,6 +147,21 @@ public class EndlessService extends Service implements SensorEventListener{
         return START_STICKY;
     }
 
+    private String parseUrl(){
+
+        try {
+            URL mUrl = new URL(url);
+            if(mUrl.getPort() == -1){ // port is not
+                return mUrl.getProtocol()+"://"+mUrl.getHost()+"/";
+            } else {
+                return mUrl.getProtocol()+"://"+mUrl.getHost()+":"+mUrl.getPort()+"/";
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -156,11 +179,8 @@ public class EndlessService extends Service implements SensorEventListener{
                 //Mainly portrait
                 if (event.values[1] > 7) {
                     isPortrait = true;
-                    // isPortrait = false;
-                    //  Log.d("SERSER","Portrait: "+event.values[1]);
                 } else  {
                     isPortrait = false;
-                    //  Log.d("SERSER","landscpas");
                 }
             }
         } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
@@ -194,124 +214,36 @@ public class EndlessService extends Service implements SensorEventListener{
                     return;
                 }*/
 
-                // Zaman farkını hesaplayın
+                // Zaman farkı
                 float deltaTime = (currentTimestamp - lastTime) / 1000f; // deltaTime saniye cinsinden olacak
 
-                // Y ekseni etrafındaki dönüş hızını hesaplayın
+                // Y ekseni etrafındaki dönüş hızı
                 float deltaRotation = Math.abs(yRotation - lastYRotation);
                 float yRotationSpeed = deltaRotation / deltaTime; // derece/saniye
-
-                // Log.d("SERSER","yRotationSpeed: "+yRotationSpeed);
-                //        Log.d("SERSER","XRotationDegrees: "+xRotationDegrees);
-                //     Log.d("SERSER","yRotationDegrees: "+yRotationDegrees);
-
-                //  Log.d("SERSER","degree fark: "+Math.abs(xRotationDegrees - lastXRotation));
+                
                 if (Math.abs(yRotationDegrees - lastYRotation) > ANGLE_THRESHOLD
                         && Math.abs(yRotationDegrees - lastYRotation) < 150
                         && Math.abs(xRotationDegrees - lastXRotation) < 30) {
                     shakeCount++;
-                    //    Log.d("SERSER","shakeCount: "+shakeCount);
-                    //   Log.d("SERSER","yRotationSpeed > SPEED_THRESHOLD: "+(yRotationSpeed > SPEED_THRESHOLD));
                     lastTime = currentTimestamp;
                     if (shakeCount >= COUNT_THRESHOLD && yRotationSpeed > SPEED_THRESHOLD ) {
-                        //      Toast.makeText(this, "Y ekseni etrafındaki dönüş açısı çok hızlı değişiyor!", Toast.LENGTH_SHORT).show();
+                       
                         vibrate();
-                        requestPost("Shake");
+                        requestPost();
                         isOk = false;
                         shakeCount = 0;
                     } else {
-                        Log.d("SERSER","RESET");
                         handler.removeCallbacks(resetRunnable);
                         handler.postDelayed(resetRunnable, RESET_INTERVAL);
                     }
                 }
 
-                /*if (shakeCount >= COUNT_THRESHOLD) {
-                    long timeSinceLastShake = currentTimestamp - lastShakeTime;
-                    if (timeSinceLastShake > 3000) {
-                        shakeCount = 0;
-                        lastShakeTime = 0;
-                    }
-                } else {
-                    lastShakeTime = currentTimestamp;
-                }*/
                 lastYRotation = yRotationDegrees;
                 lastXRotation = xRotationDegrees;
             }
         }
     }
 
-
-   /* @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.length);
-            lastAccelerometerSet = true;
-            x = event.values[0];
-            y = event.values[1];
-            z = event.values[2];
-
-            mAccelLast = mAccelCurrent;
-            mAccelCurrent = (float) Math.sqrt((double) (x * x + y * y + z * z));
-            float delta = mAccelCurrent - mAccelLast;
-            mAccel = mAccel * 0.9f + delta;
-            if(Math.abs(event.values[1]) > Math.abs(event.values[0])) {
-                //Mainly portrait
-                if (event.values[1] > 7) {
-                    isPortrait = true;
-                    // isPortrait = false;
-                    //  Log.d("SERSER","Portrait: "+event.values[1]);
-                } else  {
-                    isPortrait = false;
-                    //  Log.d("SERSER","landscpas");
-                }
-            }
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, lastMagnetometer, 0, event.values.length);
-            lastMagnetometerSet = true;
-        }
-
-        if ( lastMagnetometerSet && !isPortrait ) {
-            long currentTimestamp = System.currentTimeMillis();
-            if (currentTimestamp - lastTimestamp > SHAKE_INTERVAL) {
-                lastTimestamp = currentTimestamp;
-
-                float[] rotationMatrix = new float[9];
-                float[] orientation = new float[3];
-
-                SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer);
-                SensorManager.getOrientation(rotationMatrix, orientation);
-
-                //     Log.d("SERSER","orientation[2]: "+orientation[1]);
-                float yRotation = orientation[2];
-                float xRotation = orientation[1];
-                float xRotationDegrees = (float) Math.toDegrees(xRotation);
-                float yRotationDegrees = (float) Math.toDegrees(yRotation);
-               *//* if (yRotationDegrees < 0) {
-                    yRotationDegrees += 360;
-                }*//*
-                //        Log.d("SERSER","XRotationDegrees: "+xRotationDegrees);
-                //      Log.d("SERSER","yRotationDegrees: "+yRotationDegrees);
-
-                Log.d("SERSER","degree fark: "+Math.abs(yRotationDegrees - lastYRotation));
-                if (Math.abs(yRotationDegrees - lastYRotation) > ANGLE_THRESHOLD && Math.abs(xRotationDegrees - lastXRotation) < 30 ) {
-                    shakeCount++;
-
-                    if (shakeCount == COUNT_THRESHOLD) {
-                        //  Toast.makeText(this, "Y ekseni etrafındaki dönüş açısı çok hızlı değişiyor!", Toast.LENGTH_SHORT).show();
-                        vibrate();
-                        shakeCount = 0;
-                    } else {
-                        handler.removeCallbacks(resetRunnable);
-                        handler.postDelayed(resetRunnable, RESET_INTERVAL);
-                    }
-                }
-
-                lastYRotation = yRotationDegrees;
-                lastXRotation = xRotationDegrees;
-            }
-        }
-    }*/
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
@@ -330,26 +262,26 @@ public class EndlessService extends Service implements SensorEventListener{
         }
     }
 
-    private void requestPost(String name){
+    
+
+    private void requestPost(){
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-
+        
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
                 .build();
-        String BASE_URL = "http://192.168.1.5:3000";
+        String BASE_URL = parseUrl();
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
                 .client(client)
+                .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        HashMap<String, String> map = new HashMap<>();
-        map.put("userId", "12");
-        map.put("name", "Serhan");
+        
+        cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        cordova.plugin.service.ApiService apiService = retrofit.create(cordova.plugin.service.ApiService.class);
 
-        Call<ResponseBody> call = apiService.postData(header.toString(),map);
+        Call<ResponseBody> call = apiService.postData(url,headers,body);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -402,12 +334,12 @@ public class EndlessService extends Service implements SensorEventListener{
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         Intent restartServiceIntent = new Intent(getApplicationContext(),EndlessService.class);
+        restartServiceIntent.putExtra("params",params);
         restartServiceIntent.setPackage(getPackageName());
         PendingIntent restartServicePendingIntent = PendingIntent.getService(this,1,restartServiceIntent,PendingIntent.FLAG_IMMUTABLE);
         getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         AlarmManager alarmService = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 1000, restartServicePendingIntent);
-
     }
 
     private void startService(){
@@ -447,7 +379,7 @@ public class EndlessService extends Service implements SensorEventListener{
     }
 
     private Notification createNotification() {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, cordova.plugin.service.BackgroundService.class);
 
         final String notificationChannelId ="ENDLESS SERVICE CHANNEL";
         NotificationManager notificationManager =
@@ -470,14 +402,14 @@ public class EndlessService extends Service implements SensorEventListener{
         Notification notificationBuilder = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             notificationBuilder = new Notification.Builder(this, notificationChannelId)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",MainActivity.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",cordova.plugin.service.BackgroundService.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent).build();
         }else{
             notificationBuilder = new Notification.Builder(this)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",MainActivity.packagename))
+                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",cordova.plugin.service.BackgroundService.packagename))
                     .setContentTitle("Endless Service")
                     .setContentText("This is your favorite endless service working")
                     .setAutoCancel(true)
