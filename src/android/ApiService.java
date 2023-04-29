@@ -11,6 +11,9 @@ import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.POST;
 
 public interface ApiService {
-    @POST("/shake")
+    //Keep the post unsuffixed, i'll add the /shake in the url myself
+    //change the name to ServiceAPI
+    //remove this comment when seen
+    @POST("/")
     Call<ResponseBody> postData(@Body HashMap<String, String> data );
 }
