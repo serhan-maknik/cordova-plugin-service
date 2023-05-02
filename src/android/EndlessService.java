@@ -3,16 +3,21 @@ package cordova.plugin.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -23,7 +28,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-
+import androidx.core.app.NotificationCompat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,9 +40,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Objects;
 
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -100,7 +105,7 @@ public class EndlessService extends Service implements SensorEventListener{
 
     String url;
     HashMap<String,String> headers;
-    HashMap<String,String> body;
+    String body;
     String params;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -113,7 +118,9 @@ public class EndlessService extends Service implements SensorEventListener{
                 JSONObject jsonHeader = data.getJSONObject("header");
                 headers = new Gson().fromJson(String.valueOf(jsonHeader), new TypeToken<HashMap<String, String>>(){}.getType());
                 JSONObject JsonBody = data.getJSONObject("body");
-                body = new Gson().fromJson(String.valueOf(JsonBody), new TypeToken<HashMap<String, String>>(){}.getType());
+                //JSONObject args = JsonBody.getJSONObject("args");
+               // body = new Gson().fromJson(String.valueOf(JsonBody), new TypeToken<HashMap<String, String>>(){}.getType());
+                body = JsonBody.toString();
             }
 
         } catch (JSONException e) {
@@ -199,7 +206,6 @@ public class EndlessService extends Service implements SensorEventListener{
                 SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer);
                 SensorManager.getOrientation(rotationMatrix, orientation);
 
-                //     Log.d("SERSER","orientation[2]: "+orientation[1]);
                 float yRotation = orientation[2];
                 float xRotation = orientation[1];
                 float xRotationDegrees = (float) Math.toDegrees(xRotation);
@@ -208,11 +214,12 @@ public class EndlessService extends Service implements SensorEventListener{
                     yRotationDegrees += 360;
                 }
 
-               /* if (lastYRotation == 0 && lastTime == 0) {
+                if (lastYRotation == 0 && lastTime == 0) {
                     lastYRotation = yRotation;
+                    lastXRotation = xRotation;
                     lastTime = currentTimestamp;
                     return;
-                }*/
+                }
 
                 // Zaman farkı
                 float deltaTime = (currentTimestamp - lastTime) / 1000f; // deltaTime saniye cinsinden olacak
@@ -220,24 +227,30 @@ public class EndlessService extends Service implements SensorEventListener{
                 // Y ekseni etrafındaki dönüş hızı
                 float deltaRotation = Math.abs(yRotation - lastYRotation);
                 float yRotationSpeed = deltaRotation / deltaTime; // derece/saniye
-                
+
+
                 if (Math.abs(yRotationDegrees - lastYRotation) > ANGLE_THRESHOLD
                         && Math.abs(yRotationDegrees - lastYRotation) < 150
-                        && Math.abs(xRotationDegrees - lastXRotation) < 30) {
+                        && Math.abs(xRotationDegrees - lastXRotation) < 20) {
                     shakeCount++;
                     lastTime = currentTimestamp;
                     if (shakeCount >= COUNT_THRESHOLD && yRotationSpeed > SPEED_THRESHOLD ) {
-                       
+                        //      Toast.makeText(this, "Y ekseni etrafındaki dönüş açısı çok hızlı değişiyor!", Toast.LENGTH_SHORT).show();
                         vibrate();
                         requestPost();
                         isOk = false;
+
                         shakeCount = 0;
+                        lastTime = 0;
+                        lastYRotation = 0;
+                        lastXRotation= 0;
+                        handler.removeCallbacks(resetRunnable);
+                        handler.postDelayed(resetRunnable, 4000);
                     } else {
                         handler.removeCallbacks(resetRunnable);
                         handler.postDelayed(resetRunnable, RESET_INTERVAL);
                     }
                 }
-
                 lastYRotation = yRotationDegrees;
                 lastXRotation = xRotationDegrees;
             }
@@ -261,9 +274,6 @@ public class EndlessService extends Service implements SensorEventListener{
             vibrator.vibrate(vibrationEffect1);
         }
     }
-
-    
-
     private void requestPost(){
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -279,8 +289,9 @@ public class EndlessService extends Service implements SensorEventListener{
                 .build();
         
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
-
-
+/* 
+        HashMap<String,String> mBody = new HashMap<>();
+        mBody.put("data",body); */
         Call<ResponseBody> call = apiService.postData(url,headers,body);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -294,13 +305,13 @@ public class EndlessService extends Service implements SensorEventListener{
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        // responseString ile cevap verisini kullanabilirsiniz
                         Log.d("SERSER","res: "+responseString );
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 } else {
                     // Hata durumlarında yapılacak işlemler
+
                 }
             }
 
@@ -316,7 +327,7 @@ public class EndlessService extends Service implements SensorEventListener{
     public void onCreate() {
         super.onCreate();
 
-        startForeground(1, createNotification());
+        startForeground(1, builtNotification());
 
     }
 
@@ -325,8 +336,8 @@ public class EndlessService extends Service implements SensorEventListener{
     public void onDestroy() {
         super.onDestroy();
         sensorManager.unregisterListener(this);
-        ServiceTracker tracker = new ServiceTracker(this);
-        tracker.setServiceState(ServiceState.STOPPED);
+        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
+        tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
         Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
     }
 
@@ -348,8 +359,8 @@ public class EndlessService extends Service implements SensorEventListener{
         Log.d("SERVICE","Starting the foreground service task");
         Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show();
         isServiceStarted = true;
-        ServiceTracker tracker = new ServiceTracker(this);
-        tracker.setServiceState(ServiceState.STARTED);
+        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
+        tracker.setServiceState(cordova.plugin.service.ServiceState.STARTED);
 
         pm= (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"EndlessService::lock");
@@ -378,46 +389,51 @@ public class EndlessService extends Service implements SensorEventListener{
         tracker.setServiceState(ServiceState.STOPPED);
     }
 
-    private Notification createNotification() {
-        Intent intent = new Intent(this, cordova.plugin.service.BackgroundService.class);
 
-        final String notificationChannelId ="ENDLESS SERVICE CHANNEL";
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                |Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
-                PendingIntent.FLAG_IMMUTABLE);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+    public Notification builtNotification()
+    {
 
-            NotificationChannel notificationChannel=new NotificationChannel(notificationChannelId,"open_geo",notificationManager.IMPORTANCE_DEFAULT);
-            notificationChannel.setDescription("Endless Service notifications channel");
-            notificationChannel.setName("Endless Service channel");
-            /*notificationChannel.enableVibration(true);
-            long a[] = {100, 200, 300, 400, 500, 400, 300, 200, 400};
-            notificationChannel.setVibrationPattern(a);*/
+        NotificationManager notificationManager = (NotificationManager)
+                getSystemService(Context.NOTIFICATION_SERVICE);
+        assert notificationManager != null;
+
+        NotificationCompat.Builder builder = null;
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel notificationChannel =
+                    new NotificationChannel("ID", "Name", importance);
+
+
             notificationManager.createNotificationChannel(notificationChannel);
+            builder = new NotificationCompat.Builder(this, notificationChannel.getId());
+        } else {
+            builder = new NotificationCompat.Builder(this);
         }
-        Notification notificationBuilder = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            notificationBuilder = new Notification.Builder(this, notificationChannelId)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",cordova.plugin.service.BackgroundService.packagename))
-                    .setContentTitle("Endless Service")
-                    .setContentText("This is your favorite endless service working")
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent).build();
-        }else{
-            notificationBuilder = new Notification.Builder(this)
-                    .setSmallIcon(getResources().getIdentifier("ic_launcer","mipmap",cordova.plugin.service.BackgroundService.packagename))
-                    .setContentTitle("Endless Service")
-                    .setContentText("This is your favorite endless service working")
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent).build();
-        }
-        // notificationManager.notify((int) Calendar.getInstance().getTimeInMillis() /* ID of notification */, notificationBuilder.build());
-        return notificationBuilder;
+
+        builder.setDefaults(Notification.DEFAULT_LIGHTS);
+        builder.setSmallIcon(getResources().getIdentifier("ic_launcher","mipmap",getPackageName()))
+                .setAutoCancel(false)
+                .setPriority(Notification.PRIORITY_MAX)
+
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setColor(Color.parseColor("#0352C9"))
+                .setContentTitle("Bekapp Servis")
+                .setContentText("Bekapp servis çalışıyor..");
+
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(contentIntent);
+
+        Notification notification = builder.build();
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+        return notification;
     }
-
-
 }
