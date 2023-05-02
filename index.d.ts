@@ -8,12 +8,12 @@ interface BackgroundService {
             header:object,
             body:object,
         },
-        successCallback:()=>void,
-        errorCallback:()=>void,
+        callback:()=>void,
+        fallback:()=>void,
     ):void,
 
     stop(
-        successCallback:()=>void,
-        errorCallback:()=>void,
+        callback:()=>void,
+        fallback:()=>void,
     ):void,
 }

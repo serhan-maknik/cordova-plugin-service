@@ -1,12 +1,10 @@
 
 
 module.exports={
-    /* So the plugin would not generate an error in browser */
-    startService:()=>{
+    start:()=>{
         console.log("BackgroundService does not support the browser platform");
     },
-    stopService:()=>{
+    stop:()=>{
         console.log("BackgroundService does not support the browser platform");
     },
 }
-
