@@ -14,11 +14,11 @@ interface BackgroundService {
             toast?:string,
         },
         callback:()=>void,
-        fallback:()=>void,
+        fallback:(error:Error)=>void,
     ):void,
 
     stop(
         callback:()=>void,
-        fallback:()=>void,
+        fallback:(error:Error)=>void,
     ):void,
 }
