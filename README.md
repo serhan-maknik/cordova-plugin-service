@@ -26,21 +26,29 @@ function start(){
       }
 
       BackgroundService.start(
-      {
-           url: "http://185.230.138.93:3040",
+       {
+           url: "http://192.168.1.7:3000/shake",
            header: httpHeaders,
            body: {
                module:"messenging",
                action:"SOS",
                args:{user_id:1}
+           }, 
+           notification:{
+               title: "Service",
+               body:"Calisiyor"
            },
-      },
-      function (data) {
-          console.log(data);
-      },
-      function (error) {
+           toast:{
+               start:"Basladi",
+               stop:"Durduruldu"
+           }
+       },
+       function (data) {
+           console.log(data);
+       },
+       function (error) {
            console.log(error);
-      })
+       })
 }
 
 function stop(){
