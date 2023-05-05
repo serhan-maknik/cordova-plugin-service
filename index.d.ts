@@ -11,7 +11,10 @@ interface BackgroundService {
                 title?:string,
                 body?:string,
             },
-            toast?:string,
+            toast?:{
+                start?:string,
+                stop?:string
+            },
         },
         callback:()=>void,
         fallback:(error:Error)=>void,
