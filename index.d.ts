@@ -3,10 +3,15 @@ declare const BackgroundService:BackgroundService;
 
 interface BackgroundService {
     start(
-        data:{
+        options:{
             url:string,
-            header:object,
-            body:object,
+            header?:object,
+            body?:object,
+            notification:{
+                title?:string,
+                body?:string,
+            },
+            toast?:string,
         },
         callback:()=>void,
         fallback:()=>void,
