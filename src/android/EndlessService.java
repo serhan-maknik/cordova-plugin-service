@@ -104,9 +104,12 @@ public class EndlessService extends Service implements SensorEventListener{
     }
 
     String url;
-    HashMap<String,String> headers;
-    String body;
-    String params;
+    String body = null;
+    String params = null;
+    HashMap<String,String> headers = null;
+    HashMap<String, String> notification = null;
+    HashMap<String, String> toast = null;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         params = intent.getStringExtra("params");
@@ -115,12 +118,23 @@ public class EndlessService extends Service implements SensorEventListener{
                 JSONObject message  = new JSONObject(params);
                 JSONObject data = message.getJSONObject("data");
                 url = data.getString("url");
-                JSONObject jsonHeader = data.getJSONObject("header");
-                headers = new Gson().fromJson(String.valueOf(jsonHeader), new TypeToken<HashMap<String, String>>(){}.getType());
-                JSONObject JsonBody = data.getJSONObject("body");
-                //JSONObject args = JsonBody.getJSONObject("args");
-               // body = new Gson().fromJson(String.valueOf(JsonBody), new TypeToken<HashMap<String, String>>(){}.getType());
-                body = JsonBody.toString();
+
+                JSONObject jsonHeader = data.optJSONObject("header");
+                if(jsonHeader != null){
+                    headers = new Gson().fromJson(String.valueOf(jsonHeader), new TypeToken<HashMap<String, String>>(){}.getType());
+                }
+                JSONObject JsonBody = data.optJSONObject("body");
+                if(JsonBody != null){
+                    body = JsonBody.toString();
+                }
+                JSONObject jsonNotification = data.optJSONObject("notification");
+                if(jsonNotification != null){
+                    notification = new Gson().fromJson(String.valueOf(jsonNotification), new TypeToken<HashMap<String, String>>(){}.getType());
+                }
+                JSONObject jsonToast = data.optJSONObject("toast");
+                if(jsonToast != null){
+                    toast = new Gson().fromJson(String.valueOf(jsonToast), new TypeToken<HashMap<String, String>>(){}.getType());
+                }
             }
 
         } catch (JSONException e) {
@@ -138,8 +152,6 @@ public class EndlessService extends Service implements SensorEventListener{
 
         if (intent != null) {
             String action = intent.getAction();
-
-            Log.d("SERSER","action: "+action);
             if(Actions.START.name()== action){
                 startService();
             }else if(Actions.STOP.name()== action){
@@ -151,6 +163,10 @@ public class EndlessService extends Service implements SensorEventListener{
             Log.d("SERVİCE","with a null intent. It has been probably restarted by the system.");
         }
         // by returning this we make sure the service is restarted if the system kills the service
+
+        if(isServiceStarted){
+            startForeground(1, builtNotification());
+        }
         return START_STICKY;
     }
 
@@ -292,19 +308,30 @@ public class EndlessService extends Service implements SensorEventListener{
 /* 
         HashMap<String,String> mBody = new HashMap<>();
         mBody.put("data",body); */
-        Call<ResponseBody> call = apiService.postData(url,headers,body);
+        Call<ResponseBody> call;
+        if (headers == null && body !=null){
+            call = apiService.postData(url,body);
+        }else if(body == null && headers != null){
+            call = apiService.postData(url,headers);
+        }else if(body == null && headers == null){
+            call = apiService.postData(url);
+        }else{
+            call = apiService.postData(url,headers,body);
+        }
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     try {
                         String responseString = response.body().string();
+                        /*
                         try {
                             JSONObject jObj = new JSONObject(responseString);
 
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+                         */
                         Log.d("SERSER","res: "+responseString );
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -326,19 +353,17 @@ public class EndlessService extends Service implements SensorEventListener{
     @Override
     public void onCreate() {
         super.onCreate();
-
-        startForeground(1, builtNotification());
-
     }
 
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        isServiceStarted = false;
         sensorManager.unregisterListener(this);
         cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
         tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
-        Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
+   //     Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -356,8 +381,11 @@ public class EndlessService extends Service implements SensorEventListener{
     private void startService(){
         if (isServiceStarted) return;
 
+        if(toast != null){
+            Toast.makeText(this, toast.get("start"), Toast.LENGTH_SHORT).show();
+
+        }
         Log.d("SERVICE","Starting the foreground service task");
-        Toast.makeText(this, "Service starting its task", Toast.LENGTH_SHORT).show();
         isServiceStarted = true;
         cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
         tracker.setServiceState(cordova.plugin.service.ServiceState.STARTED);
@@ -371,7 +399,10 @@ public class EndlessService extends Service implements SensorEventListener{
 
     private void stopService(){
 
-        Toast.makeText(this, "Service stopping", Toast.LENGTH_SHORT).show();
+        if(toast != null){
+            Toast.makeText(this, toast.get("stop"), Toast.LENGTH_SHORT).show();
+        }
+
         try {
             Log.d("SERSER","wakeLock.isHeld(): "+wakeLock.isHeld());
             if(wakeLock.isHeld()){
@@ -391,8 +422,14 @@ public class EndlessService extends Service implements SensorEventListener{
 
 
 
-    public Notification builtNotification()
-    {
+    public Notification builtNotification() {
+
+        String title = "Bekapp Servis";
+        String body = "Bekapp servis çalışıyor..";
+        if(notification != null){
+            title = notification.containsKey("title") ? notification.get("title") : title;
+            body = notification.containsKey("body") ? notification.get(body): body;
+        }
 
         NotificationManager notificationManager = (NotificationManager)
                 getSystemService(Context.NOTIFICATION_SERVICE);
@@ -422,8 +459,8 @@ public class EndlessService extends Service implements SensorEventListener{
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setColor(Color.parseColor("#0352C9"))
-                .setContentTitle("Bekapp Servis")
-                .setContentText("Bekapp servis çalışıyor..");
+                .setContentTitle(title)
+                .setContentText(body);
 
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
