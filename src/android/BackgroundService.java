@@ -61,19 +61,19 @@ public class BackgroundService extends CordovaPlugin {
 
             actionOnService(Actions.START);
             Log.d("SERSER","message: "+message);
-            this.coolMethod(message, callbackContext);
+            this.callbackFunction(message, callbackContext);
             return true;
         }
         else if(action.equals("stopService")){
             actionOnService(Actions.STOP);
 
-            this.coolMethod("message", callbackContext);
+            this.callbackFunction("message", callbackContext);
             return true;
         }
         return false;
     }
 
-    private void coolMethod(String message, CallbackContext callbackContext) {
+    private void callbackFunction(String message, CallbackContext callbackContext) {
         if (message != null && message.length() > 0) {
             callbackContext.success(message);
         } else {

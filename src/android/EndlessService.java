@@ -59,6 +59,9 @@ public class EndlessService extends Service implements SensorEventListener{
     Vibrator vibrator;
     VibrationEffect vibrationEffect1;
 
+    private static final String TITLE = "Bekapp Service";
+    private static final String BODY = "BackgroundService is running";
+
     private static final int SHAKE_INTERVAL = 100; // ölçüm aralığı (ms)
     private static final float ANGLE_THRESHOLD = 60.0f; // dönüş açısı eşiği (derece)
     private  int COUNT_THRESHOLD = 3; // toast mesajı göstermek için gereken koşul sayısı
@@ -108,7 +111,8 @@ public class EndlessService extends Service implements SensorEventListener{
     String params = null;
     HashMap<String,String> headers = null;
     HashMap<String, String> notification = null;
-    HashMap<String, String> toast = null;
+    String startToast = null;
+    String stopToast = null ;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -133,7 +137,8 @@ public class EndlessService extends Service implements SensorEventListener{
                 }
                 JSONObject jsonToast = data.optJSONObject("toast");
                 if(jsonToast != null){
-                    toast = new Gson().fromJson(String.valueOf(jsonToast), new TypeToken<HashMap<String, String>>(){}.getType());
+                    startToast = jsonToast.optString("start");
+                    stopToast = jsonToast.optString("stop");
                 }
             }
 
@@ -381,8 +386,8 @@ public class EndlessService extends Service implements SensorEventListener{
     private void startService(){
         if (isServiceStarted) return;
 
-        if(toast != null){
-            Toast.makeText(this, toast.get("start"), Toast.LENGTH_SHORT).show();
+        if(!startToast.isEmpty()){
+            Toast.makeText(this, startToast, Toast.LENGTH_SHORT).show();
 
         }
         Log.d("SERVICE","Starting the foreground service task");
@@ -399,8 +404,8 @@ public class EndlessService extends Service implements SensorEventListener{
 
     private void stopService(){
 
-        if(toast != null){
-            Toast.makeText(this, toast.get("stop"), Toast.LENGTH_SHORT).show();
+        if(!stopToast.isEmpty()){
+            Toast.makeText(this, stopToast, Toast.LENGTH_SHORT).show();
         }
 
         try {
@@ -423,12 +428,11 @@ public class EndlessService extends Service implements SensorEventListener{
 
 
     public Notification builtNotification() {
-
-        String title = "Bekapp Servis";
-        String body = "Bekapp servis çalışıyor..";
+       String title = TITLE;
+       String body = BODY;
         if(notification != null){
             title = notification.containsKey("title") ? notification.get("title") : title;
-            body = notification.containsKey("body") ? notification.get(body): body;
+            body = notification.containsKey("body") ? notification.get("body"): body;
         }
 
         NotificationManager notificationManager = (NotificationManager)
