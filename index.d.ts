@@ -12,9 +12,6 @@ interface BackgroundService {
                  * @default "BackgroundService is running"
                  */
                 title?:string,
-                /**
-                 * @default ""
-                 */
                 body?:string,
             },
             toast?:{
