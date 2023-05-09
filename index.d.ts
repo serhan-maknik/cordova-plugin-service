@@ -7,7 +7,7 @@ interface BackgroundService {
             url:string,
             header?:object,
             body?:object,
-            notification:{
+            notification?:{
                 title?:string,
                 body?:string,
             },
