@@ -8,9 +8,6 @@ interface BackgroundService {
             header?:object,
             body?:object,
             notification?:{
-                /**
-                 * @default "BackgroundService is running"
-                 */
                 title?:string,
                 body?:string,
             },
