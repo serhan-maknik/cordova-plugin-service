@@ -50,55 +50,25 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import safety.com.br.android_shake_detector.core.ShakeCallback;
+import safety.com.br.android_shake_detector.core.ShakeDetector;
+import safety.com.br.android_shake_detector.core.ShakeOptions;
 
-public class EndlessService extends Service implements SensorEventListener{
-    boolean isServiceStarted = false;
-    PowerManager pm ;
-    PowerManager.WakeLock wakeLock;
-    private SensorManager mSensorManager;
-    Vibrator vibrator;
-    VibrationEffect vibrationEffect1;
-
+public class EndlessService extends Service {
     private static final String TITLE = "Bekapp Service";
     private static final String BODY = "BackgroundService is running";
-
-    private static final int SHAKE_INTERVAL = 100; // ölçüm aralığı (ms)
-    private static final float ANGLE_THRESHOLD = 60.0f; // dönüş açısı eşiği (derece)
-    private  int COUNT_THRESHOLD = 3; // toast mesajı göstermek için gereken koşul sayısı
-    private static final int RESET_INTERVAL = 1800; // count sıfırlama aralığı (ms)
-    private static final float SPEED_THRESHOLD = 400f; // derece/saniye
-
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private Sensor magnetometer;
-    private boolean lastAccelerometerSet = false;
-    private boolean lastMagnetometerSet = false;
-    private float[] lastAccelerometer = new float[3];
-    private float[] lastMagnetometer = new float[3];
-    private long lastTimestamp = 0;
-    private float lastYRotation = 0;
-    private float lastXRotation = 0;
-    private int shakeCount = 0;
-
-    private long lastTime;
-
-    private float mAccel;
-    private float mAccelCurrent;
-    private float mAccelLast;
-
-    float x;
-    float y;
-    float z ;
-    boolean isPortrait = false;
-    boolean isOk = true;
-    private Handler handler = new Handler();
-    private Runnable resetRunnable = new Runnable() {
-        @Override
-        public void run() {
-            shakeCount = 0;
-            isOk = true;
-        }
-    };
+    boolean isServiceStarted = false;
+    private PowerManager pm ;
+    private PowerManager.WakeLock wakeLock;
+    private Vibrator vibrator;
+    private String url;
+    private String body = null;
+    private  String params = null;
+    private HashMap<String,String> headers = null;
+    private HashMap<String, String> notification = null;
+    private String startToast = null;
+    private String stopToast = null ;
+    private ShakeDetector shakeDetector;
 
     @Nullable
     @Override
@@ -106,16 +76,13 @@ public class EndlessService extends Service implements SensorEventListener{
         return null;
     }
 
-    String url;
-    String body = null;
-    String params = null;
-    HashMap<String,String> headers = null;
-    HashMap<String, String> notification = null;
-    String startToast = null;
-    String stopToast = null ;
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if(!isServiceStarted){
+            shakeDedector();
+        }
+
         params = intent.getStringExtra("params");
         try {
             if(params != null){
@@ -148,24 +115,17 @@ public class EndlessService extends Service implements SensorEventListener{
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_GAME);
-
         if (intent != null) {
             String action = intent.getAction();
-            if(Actions.START.name()== action){
+            if(cordova.plugin.service.Actions.START.name()== action){
                 startService();
-            }else if(Actions.STOP.name()== action){
+            }else if(cordova.plugin.service.Actions.STOP.name()== action){
                 stopService();
             }else{
-                Log.d("SERVİCE","This should never happen. No action in the received intent");
+                Log.d("SERVICE","This should never happen. No action in the received intent");
             }
         } else {
-            Log.d("SERVİCE","with a null intent. It has been probably restarted by the system.");
+            Log.d("SERVICE","with a null intent. It has been probably restarted by the system.");
         }
         // by returning this we make sure the service is restarted if the system kills the service
 
@@ -190,101 +150,27 @@ public class EndlessService extends Service implements SensorEventListener{
         return url;
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.length);
-            lastAccelerometerSet = true;
-            x = event.values[0];
-            y = event.values[1];
-            z = event.values[2];
+    private void shakeDedector(){
+        ShakeOptions options = new ShakeOptions()
+                .background(true)
+                .interval(1000)
+                .shakeCount(3)
+                .sensibility(5f);
+        shakeDetector = new ShakeDetector(options);
+        shakeDetector.stopShakeDetector(getApplicationContext());
 
-            mAccelLast = mAccelCurrent;
-            mAccelCurrent = (float) Math.sqrt((double) (x * x + y * y + z * z));
-            float delta = mAccelCurrent - mAccelLast;
-            mAccel = mAccel * 0.9f + delta;
-            if(Math.abs(event.values[1]) > Math.abs(event.values[0])) {
-                //Mainly portrait
-                if (event.values[1] > 7) {
-                    isPortrait = true;
-                } else  {
-                    isPortrait = false;
-                }
+        shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
+            @Override
+            public void onShake() {
+                vibrate();
+                requestPost();
             }
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, lastMagnetometer, 0, event.values.length);
-            lastMagnetometerSet = true;
-        }
-
-        if ( lastMagnetometerSet && !isPortrait ) {
-            long currentTimestamp = System.currentTimeMillis();
-            if (currentTimestamp - lastTimestamp > SHAKE_INTERVAL && isOk) {
-                lastTimestamp = currentTimestamp;
-
-                float[] rotationMatrix = new float[9];
-                float[] orientation = new float[3];
-
-                SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer);
-                SensorManager.getOrientation(rotationMatrix, orientation);
-
-                float yRotation = orientation[2];
-                float xRotation = orientation[1];
-                float xRotationDegrees = (float) Math.toDegrees(xRotation);
-                float yRotationDegrees = (float) Math.toDegrees(yRotation);
-                if (yRotationDegrees < 0) {
-                    yRotationDegrees += 360;
-                }
-
-                if (lastYRotation == 0 && lastTime == 0) {
-                    lastYRotation = yRotation;
-                    lastXRotation = xRotation;
-                    lastTime = currentTimestamp;
-                    return;
-                }
-
-                // Zaman farkı
-                float deltaTime = (currentTimestamp - lastTime) / 1000f; // deltaTime saniye cinsinden olacak
-
-                // Y ekseni etrafındaki dönüş hızı
-                float deltaRotation = Math.abs(yRotation - lastYRotation);
-                float yRotationSpeed = deltaRotation / deltaTime; // derece/saniye
-
-
-                if (Math.abs(yRotationDegrees - lastYRotation) > ANGLE_THRESHOLD
-                        && Math.abs(yRotationDegrees - lastYRotation) < 150
-                        && Math.abs(xRotationDegrees - lastXRotation) < 20) {
-                    shakeCount++;
-                    lastTime = currentTimestamp;
-                    if (shakeCount >= COUNT_THRESHOLD && yRotationSpeed > SPEED_THRESHOLD ) {
-                        //      Toast.makeText(this, "Y ekseni etrafındaki dönüş açısı çok hızlı değişiyor!", Toast.LENGTH_SHORT).show();
-                        vibrate();
-                        requestPost();
-                        isOk = false;
-
-                        shakeCount = 0;
-                        lastTime = 0;
-                        lastYRotation = 0;
-                        lastXRotation= 0;
-                        handler.removeCallbacks(resetRunnable);
-                        handler.postDelayed(resetRunnable, 4000);
-                    } else {
-                        handler.removeCallbacks(resetRunnable);
-                        handler.postDelayed(resetRunnable, RESET_INTERVAL);
-                    }
-                }
-                lastYRotation = yRotationDegrees;
-                lastXRotation = xRotationDegrees;
-            }
-        }
-    }
-
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
+        });
 
     }
     public void vibrate(){
         // this is the only type of the vibration which requires system version Oreo (API 26)
+        final VibrationEffect vibrationEffect1;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 
             // this effect creates the vibration of default amplitude for 1000ms(1 sec)
@@ -298,7 +184,7 @@ public class EndlessService extends Service implements SensorEventListener{
     private void requestPost(){
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        
+
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
                 .build();
@@ -308,11 +194,9 @@ public class EndlessService extends Service implements SensorEventListener{
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        
+
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
-/* 
-        HashMap<String,String> mBody = new HashMap<>();
-        mBody.put("data",body); */
+
         Call<ResponseBody> call;
         if (headers == null && body !=null){
             call = apiService.postData(url,body);
@@ -365,10 +249,9 @@ public class EndlessService extends Service implements SensorEventListener{
     public void onDestroy() {
         super.onDestroy();
         isServiceStarted = false;
-        sensorManager.unregisterListener(this);
         cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
         tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
-   //     Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
+        //     Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -421,15 +304,15 @@ public class EndlessService extends Service implements SensorEventListener{
         }
 
         isServiceStarted = false;
-        ServiceTracker tracker = new ServiceTracker(this);
-        tracker.setServiceState(ServiceState.STOPPED);
+        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
+        tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
     }
 
 
 
     public Notification builtNotification() {
-       String title = TITLE;
-       String body = BODY;
+        String title = TITLE;
+        String body = BODY;
         if(notification != null){
             title = notification.containsKey("title") ? notification.get("title") : title;
             body = notification.containsKey("body") ? notification.get("body"): body;
