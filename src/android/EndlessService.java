@@ -55,8 +55,8 @@ import safety.com.br.android_shake_detector.core.ShakeDetector;
 import safety.com.br.android_shake_detector.core.ShakeOptions;
 
 public class EndlessService extends Service {
-    private static final String TITLE = "Bekapp Service";
-    private static final String BODY = "BackgroundService is running";
+    private static final String TITLE = "BackgroundService is running";
+    private static final String BODY = "";
     boolean isServiceStarted = false;
     private PowerManager pm ;
     private PowerManager.WakeLock wakeLock;
@@ -66,8 +66,8 @@ public class EndlessService extends Service {
     private  String params = null;
     private HashMap<String,String> headers = null;
     private HashMap<String, String> notification = null;
-    private String startToast = null;
-    private String stopToast = null ;
+    private String startToast = "";
+    private String stopToast = "" ;
     private ShakeDetector shakeDetector;
 
     @Nullable
