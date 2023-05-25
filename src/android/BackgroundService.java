@@ -82,13 +82,11 @@ public class BackgroundService extends CordovaPlugin {
         this.callbackContext = callbackContext;
         if (action.equals("startService")) {
             message = args.getString(0);
-            batteryOptimization();
-            Log.d("SERSER","message: "+message);
             JSONObject jsonObject  = new JSONObject(message);
             JSONObject data = jsonObject.optJSONObject("data");
             JSONObject permissions = data.optJSONObject("permissions");
             parseJson(permissions);
-            Log.d("SERSER","permissions: "+permissions);
+            batteryOptimization();
             return true;
         }
         else if(action.equals("stopService")){
@@ -117,27 +115,27 @@ public class BackgroundService extends CordovaPlugin {
             JSONObject backgroundPermission = permissions.optJSONObject("backgroundPermission");
 
             if(batteryPermission != null){
-                batteryTitle = batteryPermission.optString("title");
-                batteryBody = batteryPermission.optString("body");
-                batteryButton = batteryPermission.optString("button");
+                batteryTitle = batteryPermission.has("title") ? batteryPermission.optString("title"):DefaultString.batteryTitle;
+                batteryBody = batteryPermission.has("body") ? batteryPermission.optString("body"): DefaultString.batteryBody;
+                batteryButton = batteryPermission.has("button") ? batteryPermission.optString("button"): DefaultString.batteryButton;
             }
 
             if(enableLocation != null){
-                enableGpsTitle = enableLocation.optString("title");
-                enableGpsBody = enableLocation.optString("body");
-                enableGpsButton = enableLocation.optString("button");
+                enableGpsTitle = enableLocation.has("title") ? enableLocation.optString("title"): DefaultString.enableGpsTitle;
+                enableGpsBody = enableLocation.has("body") ? enableLocation.optString("body"): DefaultString.enableGpsBody;
+                enableGpsButton = enableLocation.has("button") ? enableLocation.optString("button"): DefaultString.enableGpsButton;
             }
 
             if(forgroundPermission != null){
-                fLocationTitle = forgroundPermission.optString("title");
-                fLocationBody = forgroundPermission.optString("body");
-                fLocationButton = forgroundPermission.optString("button");
+                fLocationTitle = forgroundPermission.has("title") ? forgroundPermission.optString("title"): DefaultString.fLocationTitle;
+                fLocationBody = forgroundPermission.has("body") ? forgroundPermission.optString("body"): DefaultString.fLocationBody;
+                fLocationButton = forgroundPermission.has("button") ? forgroundPermission.optString("button"): DefaultString.fLocationButton;
             }
 
             if(backgroundPermission != null){
-                bLocationTitle = backgroundPermission.optString("title");
-                bLocationBody = backgroundPermission.optString("body");
-                bLocationButton = backgroundPermission.optString("button");
+                bLocationTitle = backgroundPermission.has("title") ? backgroundPermission.optString("title"): DefaultString.bLocationTitle;
+                bLocationBody = backgroundPermission.has("body") ? backgroundPermission.optString("body"): DefaultString.bLocationBody;
+                bLocationButton = backgroundPermission.has("button") ? backgroundPermission.optString("button"): DefaultString.bLocationButton;
             }
         }
     }
@@ -158,10 +156,9 @@ public class BackgroundService extends CordovaPlugin {
     }
 
     private void checkPermission() {
-        Log.d("SERSER","ContextCompat.checkSelfPermission(cordova.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)"+ContextCompat.checkSelfPermission(cordova.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION));
 
        if (ContextCompat.checkSelfPermission(cordova.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-           Log.d("SERSER","ACCESS_FINE_LOCATION");
+          
             // Fine Location permission is granted
             // Check if current android version >= 11, if >= 11 check for Background Location permission
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -175,7 +172,6 @@ public class BackgroundService extends CordovaPlugin {
                 }
             }
         } else {
-           Log.d("SERSER","askForLocationPermission()");
             // Fine Location Permission is not granted so ask for permission
             askForLocationPermission();
         }
@@ -271,7 +267,7 @@ public class BackgroundService extends CordovaPlugin {
     }
 
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
-        Log.d("SERSER", "onRequestPermissionsResult : "+requestCode);
+
         if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // User granted location permission
@@ -306,7 +302,6 @@ public class BackgroundService extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.d("SERSER","resultCode: "+resultCode+"\t"+RESULT_OK);
         if (requestCode == REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) {
             if (resultCode == RESULT_OK) {
                 if(checkGps()){
@@ -324,8 +319,6 @@ public class BackgroundService extends CordovaPlugin {
                      alertDialog(enableGpsTitle,enableGpsBody,enableGpsButton,GPS_ENABLE);
                  }
         }else if(requestCode == GPS_ENABLED_MANUALLY){
-               Log.d("SERSER","resultCode: "+resultCode+"\t"+RESULT_OK);
-
                     alertDialog(bLocationTitle,bLocationBody,bLocationButton,GPS_ENABLE);
 
         }

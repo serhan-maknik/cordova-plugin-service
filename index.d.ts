@@ -17,24 +17,24 @@ interface BackgroundService {
             },
             permissions?:{
                 batteryPermission?:{
-                    title:string,
-                    body:string,
-                    button:string,
+                    title?:string,
+                    body?:string,
+                    button?:string,
                 },
                 enableLocation?:{
-                    title:string,
-                    body:string,
-                    button:string,
+                    title?:string,
+                    body?:string,
+                    button?:string,
                 },
                 forgroundPermission?:{
-                    title:string,
-                    body:string,
-                    button:string,
+                    title?:string,
+                    body?:string,
+                    button?:string,
                 },
                 backgroundPermission?:{
-                    title:string,
-                    body:string,
-                    button:string,
+                    title?:string,
+                    body?:string,
+                    button?:string,
                 }
             }
         },
