@@ -15,6 +15,28 @@ interface BackgroundService {
                 start?:string,
                 stop?:string
             },
+            permissions?:{
+                batteryPermission?:{
+                    title:"",
+                    body:"",
+                    button:"",
+                },
+                enableLocation?:{
+                    title:"",
+                    body:"",
+                    button:"",
+                },
+                forgroundPermission?:{
+                    title:"",
+                    body:"",
+                    button:"",
+                },
+                backgroundPermission?:{
+                    title:"",
+                    body:"",
+                    button:"",
+                }
+            }
         },
         callback:()=>void,
         fallback:(error:Error)=>void,

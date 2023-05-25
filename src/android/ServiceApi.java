@@ -12,7 +12,7 @@ import retrofit2.http.POST;
 import retrofit2.http.Url;
 
 public interface ServiceApi {
-    @POST
+   @POST
     Call<ResponseBody> postData(@Url String url);
 
     @POST
@@ -22,5 +22,11 @@ public interface ServiceApi {
     Call<ResponseBody> postData(@Url String url, @HeaderMap Map<String, String> header );
 
     @POST
-    Call<ResponseBody> postData(@Url String url, @HeaderMap Map<String, String> header,@Body String body );
+    Call<ResponseBody> postData(@Url String url, @HeaderMap Map<String, String> header,@Body HashMap<String,String> body );
+
+    @POST
+    Call<ResponseBody> postLocation(@Url String url, @Body HashMap<String,String> location );
+
+    @POST
+    Call<ResponseBody> mocklocation(@Url String url,@Body HashMap<String,String> body );
 }

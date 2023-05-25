@@ -20,6 +20,9 @@
            <application android:usesCleartextTraffic="true" />
         </edit-config> 
 		<config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 		    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 			<uses-permission android:name="android.permission.VIBRATE"/>
 			<uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -42,6 +45,8 @@
         <source-file src="src/android/ServiceTracker.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/StartReceiver.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/ServiceApi.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/CurrentLocationListener.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/DefaultString.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
 
