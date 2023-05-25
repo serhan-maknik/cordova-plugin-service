@@ -50,7 +50,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import cordova.plugin.service.CurrentLocationListener;
 import safety.com.br.android_shake_detector.core.ShakeCallback;
 import safety.com.br.android_shake_detector.core.ShakeDetector;
 import safety.com.br.android_shake_detector.core.ShakeOptions;
@@ -406,7 +405,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         body.put("longitude", String.valueOf(location.getLongitude()));
 
         try {
-            SOS.put("location",body);
+            SOS.getJSONObject("args").put("location",body);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -454,7 +453,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         body.put("longitude",longitude);
 
         try {
-            jsonLocation.put("location",body);
+            jsonLocation.getJSONObject("args").put("location",body);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -488,10 +487,19 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        HashMap<String,String> mockPost = new HashMap<>();
-        mockPost.put("gpsClosed","GPS turned off by user");
-        
-        Call<ResponseBody> call = apiService.mocklocation(url,mockPost);
+        JSONObject gpsClosed = jsonLocation;
+
+        try {
+            gpsClosed.putOpt("action","gps_close");
+            gpsClosed.getJSONObject("args").put("location","null");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        HashMap<String,String> mBody = new HashMap<>();
+        mBody.put("data",gpsClosed.toString());
+
+
+        Call<ResponseBody> call = apiService.mocklocation(url,mBody);
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
