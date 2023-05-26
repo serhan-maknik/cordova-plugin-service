@@ -262,7 +262,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         {
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel notificationChannel =
-                    new NotificationChannel("ID", "Name", importance);
+                    new NotificationChannel("ID", "Background Service", importance);
 
 
             notificationManager.createNotificationChannel(notificationChannel);
