@@ -49,7 +49,7 @@
                start: "Basladi",
                stop: "Durduruldu"
            },
-           // Permission modal text
+           // if the person denies the permissions these modals will appear
            permissions: { 
                // Battery optimization permission     
                batteryPermission: {
