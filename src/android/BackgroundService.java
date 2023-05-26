@@ -319,7 +319,7 @@ public class BackgroundService extends CordovaPlugin {
                      alertDialog(enableGpsTitle,enableGpsBody,enableGpsButton,GPS_ENABLE);
                  }
         }else if(requestCode == GPS_ENABLED_MANUALLY){
-                    alertDialog(bLocationTitle,bLocationBody,bLocationButton,GPS_ENABLE);
+                    checkPermission();
 
         }
     }
