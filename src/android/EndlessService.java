@@ -53,6 +53,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import safety.com.br.android_shake_detector.core.ShakeCallback;
 import safety.com.br.android_shake_detector.core.ShakeDetector;
 import safety.com.br.android_shake_detector.core.ShakeOptions;
+import cordova.plugin.service.CurrentLocationListener;
+
 
 public class EndlessService extends Service implements  CurrentLocationListener.LocationListener, CurrentLocationListener.MockListener {
     boolean isServiceStarted = false;
@@ -66,7 +68,15 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
     public Location location = null;
 
-    boolean isOk = true;
+    private JSONObject SOS = null;
+    private JSONObject jsonLocation = null;
+    private String url;
+    private String params = null;
+    private HashMap<String,String> headers = null;
+    private HashMap<String, String> notification = null;
+    private String startToast = "";
+    private String stopToast = "" ;
+    private CurrentLocationListener currentLocationListener;
 
     @Nullable
     @Override
@@ -74,15 +84,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         return null;
     }
 
-    JSONObject SOS;
-    JSONObject jsonLocation;
-    String url;
-    String params = null;
-    HashMap<String,String> headers = null;
-    HashMap<String, String> notification = null;
-    String startToast = "";
-    String stopToast = "" ;
-    CurrentLocationListener currentLocationListener;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         params = intent.getStringExtra("params");
@@ -105,8 +106,8 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                 }
                 JSONObject JsonBody = data.optJSONObject("body");
                 if(JsonBody != null){
-                   SOS = JsonBody.getJSONObject("SOS");
-                   jsonLocation = JsonBody.getJSONObject("location");
+                   SOS = JsonBody.optJSONObject("SOS");
+                   jsonLocation = JsonBody.optJSONObject("location");
                 }
                 JSONObject jsonNotification = data.optJSONObject("notification");
                 if(jsonNotification != null){
@@ -229,13 +230,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Intent restartServiceIntent = new Intent(getApplicationContext(),EndlessService.class);
-        restartServiceIntent.putExtra("params",params);
-        restartServiceIntent.setPackage(getPackageName());
-        PendingIntent restartServicePendingIntent = PendingIntent.getService(this,1,restartServiceIntent,PendingIntent.FLAG_IMMUTABLE);
-        getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        AlarmManager alarmService = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 1000, restartServicePendingIntent);
+
     }
     boolean isFirst = true;
     @Override
@@ -246,7 +241,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             startHandler();
             isFirst = false;
         }
-        Log.d("SERSER","latitude: "+location.getLatitude());
     }
 
     public Notification builtNotification() {
@@ -356,8 +350,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
     @Override
     public void onMockLocationsDetected() {
-        Log.d("SERSER","mock dedect");
-        mockLocationPost("http://192.168.1.62:3000/");
+        mockLocationPost(parseUrl(url));
     }
 
 
@@ -414,12 +407,8 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         mBody.put("data",SOS.toString());
 
         Call<ResponseBody> call;
-        if (headers == null && mBody !=null){
+        if (headers == null ){
             call = apiService.postData(url,mBody);
-        }else if(body == null && headers != null){
-            call = apiService.postData(url,headers);
-        }else if(body == null && headers == null){
-            call = apiService.postData(url);
         }else{
             call = apiService.postData(url,headers,mBody);
         }
@@ -460,7 +449,13 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         HashMap<String,String> mBody = new HashMap<>();
         mBody.put("data",jsonLocation.toString());
 
-        Call<ResponseBody> call = apiService.postLocation(url,mBody);
+
+        Call<ResponseBody> call;
+        if (headers == null){
+            call = apiService.postData(url,mBody);
+        }else{
+            call = apiService.postData(url,headers,mBody);
+        }
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -495,11 +490,16 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         HashMap<String,String> mBody = new HashMap<>();
         mBody.put("data",gpsClosed.toString());
 
-
-        Call<ResponseBody> call = apiService.mocklocation(url,mBody);
+        Call<ResponseBody> call;
+        if (headers == null){
+            call = apiService.postData(url,mBody);
+        }else{
+            call = apiService.postData(url,headers,mBody);
+        }
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -526,10 +526,25 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        HashMap<String,String> mockPost = new HashMap<>();
-        mockPost.put("mocklocate","Mock location detected");
+        JSONObject mockLocation = jsonLocation;
 
-        Call<ResponseBody> call = apiService.mocklocation(url,mockPost);
+        try {
+            mockLocation.putOpt("action","mock_location");
+            mockLocation.getJSONObject("args").put("location","null");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HashMap<String,String> mBody = new HashMap<>();
+        mBody.put("data",mockLocation.toString());
+
+        Call<ResponseBody> call;
+
+        if (headers == null){
+            call = apiService.postData(url,mBody);
+        }else{
+            call = apiService.postData(url,headers,mBody);
+        }
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
