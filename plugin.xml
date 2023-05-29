@@ -48,6 +48,7 @@
         <source-file src="src/android/CurrentLocationListener.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/DefaultString.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
+        <source-file src="src/android/raw/beep.mp3" target-dir="src/raw" />
     </platform>
 
     <platform name="ios">
