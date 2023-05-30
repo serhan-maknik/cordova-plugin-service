@@ -276,7 +276,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             startHandler();
             isFirst = false;
         }
-      
+        Log.d("SERSER","latitude: "+location.getLatitude());
     }
 
     public Notification builtNotification() {
@@ -570,11 +570,11 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         Retrofit retrofit = retrofitConf(baseUrl);
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
-        
+
         JSONObject gpsClosed = null;
 
         gpsClosed = jsonParse("gpsClosed");
-        
+
         Call<ResponseBody> call;
         if (headers == null){
             call = apiService.postData(url,gpsClosed.toString());
