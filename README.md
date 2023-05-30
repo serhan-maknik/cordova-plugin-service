@@ -78,13 +78,13 @@ function start() {
                 // this permission is required!, before Background permission
                 forgroundPermission: {
                     title: "Forground Location Permission",
-                    body: "GPS permission is required.\t Go to settings and enable the permission.",
+                    body: "GPS permission is required. Go to settings and enable the permission.",
                     button: "Settings"
                 },
                 // Location Background permission
                 backgroundPermission: {
                     title: "Background Location Permission",
-                    body: "Background Application Permit Required!,\t Always allow on the next screen",
+                    body: "Background Application Permit Required!, Always allow on the next screen",
                     button: "Settings"
                 },
 
