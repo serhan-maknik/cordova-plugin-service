@@ -19,8 +19,5 @@ public interface ServiceApi {
     Call<ResponseBody> postData(@Url String url, @Body String body );
 
     @POST
-    Call<ResponseBody> postData(@Url String url, @Body HashMap<String,String> body );
-
-    @POST
-    Call<ResponseBody> postData(@Url String url, @HeaderMap Map<String, String> header,@Body HashMap<String,String> body );
+    Call<ResponseBody> postData(@Url String url, @HeaderMap Map<String, String> header,@Body String body );
 }
