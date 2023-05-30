@@ -7,6 +7,7 @@ interface BackgroundService {
             url:string,
             header?:object,
             body?:object,
+            locationInterval:int, //millisecond ex: 5*60*1000 = 5 minutes
             notification?:{
                 title?:string,
                 body?:string,

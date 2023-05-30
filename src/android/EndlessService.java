@@ -16,6 +16,7 @@ import android.graphics.Color;
 
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -30,6 +31,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -42,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 
+import cordova.plugin.service.BackgroundService;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -65,6 +68,14 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private ShakeDetector shakeDetector;
     private static final String TITLE = "BackgroundService is running";
     private static final String BODY = "";
+
+    private static final String GPS_CHANNEL_ID = "gps_channel";
+    private static final String CHANNEL_NAME = "GPS CHANNEL";
+    private static final String CHANNEL_DESCRIPTION = "gps closed warning";
+    private static final int NOTIFICATION_ID = 2;
+
+    private static final String GSP_WARNING = "GPS Closed Warning";
+    private static final String GPS_BODY = "";
 
     public Location location = null;
 
@@ -107,7 +118,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                 JSONObject JsonBody = data.optJSONObject("body");
                 if(JsonBody != null){
                    SOS = JsonBody.optJSONObject("SOS");
-                   jsonLocation = JsonBody.optJSONObject("location");
+                   jsonLocation = JsonBody.optJSONObject("locationPost");
                 }
                 JSONObject jsonNotification = data.optJSONObject("notification");
                 if(jsonNotification != null){
@@ -147,6 +158,24 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         return START_STICKY;
     }
 
+
+    private JSONObject jsonParse(String name){
+        JSONObject returnJson = null;
+        try {
+            JSONObject message = new JSONObject(params);
+            JSONObject data = message.getJSONObject("data");
+            JSONObject JsonBody = data.optJSONObject("body");
+            if(JsonBody != null){
+                returnJson = JsonBody.optJSONObject(name);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        finally {
+            return  returnJson;
+        }
+    }
+
     boolean isGpsEnable = false;
     private boolean checkGps(){
         ContentResolver contentResolver = getBaseContext().getContentResolver();
@@ -157,6 +186,9 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         if (mode == Settings.Secure.LOCATION_MODE_OFF) {
             // Location is turned OFF!
             gpsClosed(parseUrl(url));
+           // gpsClosedNotification();
+            gpsClosedNotification(this,"GPS","CLOSED");
+            setSound();
             isGpsEnable = false;
         } else {
             // Location is turned ON!
@@ -179,7 +211,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
                 @Override
                 public void onShake() {
-                    requestPost(parseUrl(url));
+                    shakeRequest(parseUrl(url));
                 }
             });
     }
@@ -241,6 +273,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             startHandler();
             isFirst = false;
         }
+        Log.d("SERSER","latitude: "+location.getLatitude());
     }
 
     public Notification builtNotification() {
@@ -262,7 +295,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         {
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel notificationChannel =
-                    new NotificationChannel("ID", "Background Service", importance);
+                    new NotificationChannel("ID", "Background", importance);
 
 
             notificationManager.createNotificationChannel(notificationChannel);
@@ -292,6 +325,33 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         notification.flags = Notification.FLAG_ONGOING_EVENT;
         return notification;
     }
+
+
+    public void gpsClosedNotification(Context context, String title, String message) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(GPS_CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(CHANNEL_DESCRIPTION);
+
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, GPS_CHANNEL_ID)
+                .setSmallIcon(getResources().getIdentifier("ic_launcher","mipmap",getPackageName()))
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
 
     private void startService(){
         if (isServiceStarted) return;
@@ -351,7 +411,31 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     @Override
     public void onMockLocationsDetected() {
         mockLocationPost(parseUrl(url));
+
     }
+
+    private Handler soundHandler;
+    private Runnable soundRunnable;
+    private int count = 0;
+    private void setSound(){
+        MediaPlayer mp = MediaPlayer.create(this, getResources().getIdentifier("beep", "raw", getPackageName()));
+
+        soundHandler = new Handler(Looper.getMainLooper());
+        soundRunnable = new Runnable() {
+            @Override
+            public void run() {
+                mp.start();
+                if(count < 4){
+                    soundHandler.postDelayed(soundRunnable, 1200);
+                    count++;
+                    return;
+                }
+               count = 0;
+            }
+        };
+        soundHandler.post(soundRunnable);
+    }
+
 
 
     /* ***************** Api Requests ******************* */
@@ -388,7 +472,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         return retrofit;
     }
 
-    private void requestPost(String baseUrl){
+    private void shakeRequest(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
@@ -396,9 +480,15 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         HashMap<String,String> body = new HashMap<>();
         body.put("latitude", String.valueOf(location.getLatitude()));
         body.put("longitude", String.valueOf(location.getLongitude()));
-
+        JSONObject SOS = null;
         try {
-            SOS.getJSONObject("args").put("location",body);
+            SOS = jsonParse("SOS");
+            if(SOS != null){
+                SOS.getJSONObject("args").put("location",body);
+            }else{
+                return;
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -441,8 +531,17 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         body.put("latitude",latitude);
         body.put("longitude",longitude);
 
+
+        JSONObject jsonLocation = null;
         try {
-            jsonLocation.getJSONObject("args").put("location",body);
+            jsonLocation = jsonParse("locationPost");
+            if(jsonLocation != null){
+                jsonLocation.getJSONObject("args").put("location",body);
+            }else{
+                return;
+            }
+
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -482,15 +581,20 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        JSONObject gpsClosed = jsonLocation;
 
+        JSONObject gpsClosed = null;
         try {
-            gpsClosed.putOpt("action","gps_close");
-            gpsClosed.getJSONObject("args").put("location","null");
+            gpsClosed = jsonParse("gpsClosed");
+            if(gpsClosed != null){
+                gpsClosed.getJSONObject("args").put("location","null");
+            }else{
+                return;
+            }
+
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
         HashMap<String,String> mBody = new HashMap<>();
         mBody.put("data",gpsClosed.toString());
 
@@ -526,20 +630,21 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        JSONObject mockLocation = jsonLocation;
+        JSONObject mockLocation = null;
 
         try {
-            mockLocation.putOpt("action","mock_location");
-            mockLocation.getJSONObject("args").put("location","null");
+            mockLocation = jsonParse("mockLocation");
+            if(mockLocation != null){
+                mockLocation.getJSONObject("args").put("location","null");
+            }else{
+                return;
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
         HashMap<String,String> mBody = new HashMap<>();
         mBody.put("data",mockLocation.toString());
-
         Call<ResponseBody> call;
-
         if (headers == null){
             call = apiService.postData(url,mBody);
         }else{
