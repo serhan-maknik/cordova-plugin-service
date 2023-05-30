@@ -7,28 +7,15 @@ interface BackgroundService {
             url:string,
             header?:object,
             body?:{
-                SOS: {
-                    module: "messenging",
-                    action: "SOS",
-                    args: { user_id: 1 }
-                },
-                locationPost: {
-                    module: "location",
-                    action: "track",
-                    args: { user_id: 1 }
-                },
-                gpsClosed: {
-                    module: "location",
-                    action: "gps_close",
-                    args: { user_id: 1 }
-                },
-                mockLocation: {
-                    module: "location",
-                    action: "moclocation",
-                    args: { user_id: 1 }
-                },
+                SOS?:BackgroundServiceBody,
+                locationPost?:BackgroundServiceBody,
+                gpsClosed?:BackgroundServiceBody,
+                mockLocation?:BackgroundServiceBody,
             },
-            locationInterval:number, //millisecond ex: 5*60*1000 = 5 minutes
+            /**
+             * geolocation refresh interval in milliseconds
+             */
+            locationInterval:number,
             notification?:{
                 title?:string,
                 body?:string,
@@ -37,28 +24,11 @@ interface BackgroundService {
                 start?:string,
                 stop?:string
             },
-            
             permissions?:{
-                batteryPermission?:{
-                    title?:string,
-                    body?:string,
-                    button?:string,
-                },
-                enableLocation?:{
-                    title?:string,
-                    body?:string,
-                    button?:string,
-                },
-                forgroundPermission?:{
-                    title?:string,
-                    body?:string,
-                    button?:string,
-                },
-                backgroundPermission?:{
-                    title?:string,
-                    body?:string,
-                    button?:string,
-                }
+                batteryPermission?:BackgroundServicePermission,
+                enableLocation?:BackgroundServicePermission,
+                forgroundPermission?:BackgroundServicePermission,
+                backgroundPermission?:BackgroundServicePermission,
             }
         },
         callback:()=>void,
@@ -69,4 +39,15 @@ interface BackgroundService {
         callback:()=>void,
         fallback:(error:Error)=>void,
     ):void,
+}
+
+type BackgroundServiceBody={
+    module:string,
+    action:string,
+    args:object,
+}
+type BackgroundServicePermission={
+    title?:string,
+    body?:string,
+    button?:string,
 }
