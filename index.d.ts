@@ -16,6 +16,7 @@ interface BackgroundService {
                 start?:string,
                 stop?:string
             },
+            
             permissions?:{
                 batteryPermission?:{
                     title?:string,
