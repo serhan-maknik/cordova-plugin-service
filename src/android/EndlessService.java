@@ -89,6 +89,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private String stopToast = "" ;
     private CurrentLocationListener currentLocationListener;
 
+    private int locationInterval = 5*60*1000;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -111,6 +112,10 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                 JSONObject message  = new JSONObject(params);
                 JSONObject data = message.getJSONObject("data");
                 url = data.getString("url");
+                int _locationInterval = data.optInt("locationInterval");
+                if(_locationInterval != 0){
+                    locationInterval = _locationInterval;
+                }
                 JSONObject jsonHeader = data.optJSONObject("header");
                 if(jsonHeader != null){
                     headers = new Gson().fromJson(String.valueOf(jsonHeader), new TypeToken<HashMap<String, String>>(){}.getType());
@@ -244,7 +249,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                     String longitude = String.valueOf(location.getLongitude());
                     locationPost(parseUrl(url),latidute,longitude);
                 }
-                locationHandler.postDelayed(runnable, 15000);
+                locationHandler.postDelayed(runnable, locationInterval);
             }
         };
     }
