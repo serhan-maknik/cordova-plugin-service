@@ -6,7 +6,28 @@ interface BackgroundService {
         options:{
             url:string,
             header?:object,
-            body?:object,
+            body?:{
+                SOS: {
+                    module: "messenging",
+                    action: "SOS",
+                    args: { user_id: 1 }
+                },
+                locationPost: {
+                    module: "location",
+                    action: "track",
+                    args: { user_id: 1 }
+                },
+                gpsClosed: {
+                    module: "location",
+                    action: "gps_close",
+                    args: { user_id: 1 }
+                },
+                mockLocation: {
+                    module: "location",
+                    action: "moclocation",
+                    args: { user_id: 1 }
+                },
+            },
             locationInterval:number, //millisecond ex: 5*60*1000 = 5 minutes
             notification?:{
                 title?:string,
