@@ -245,9 +245,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             @Override
             public void run() {
                 if(checkGps()){
-                    String latidute = String.valueOf(location.getLatitude());
-                    String longitude = String.valueOf(location.getLongitude());
-                    locationPost(parseUrl(url),latidute,longitude);
+                    locationPost(parseUrl(url));
                 }
                 locationHandler.postDelayed(runnable, locationInterval);
             }
@@ -278,7 +276,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             startHandler();
             isFirst = false;
         }
-        Log.d("SERSER","latitude: "+location.getLatitude());
+      
     }
 
     public Notification builtNotification() {
@@ -482,30 +480,24 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         Retrofit retrofit = retrofitConf(baseUrl);
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        HashMap<String,String> body = new HashMap<>();
-        body.put("latitude", String.valueOf(location.getLatitude()));
-        body.put("longitude", String.valueOf(location.getLongitude()));
         JSONObject SOS = null;
         try {
             SOS = jsonParse("SOS");
             if(SOS != null){
-                SOS.getJSONObject("args").put("location",body);
+                SOS.getJSONObject("args").put("lat",location.getLatitude());
+                SOS.getJSONObject("args").put("lng",location.getLongitude());
             }else{
                 return;
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        HashMap<String,String> mBody = new HashMap<>();
-        mBody.put("data",SOS.toString());
-
         Call<ResponseBody> call;
         if (headers == null ){
-            call = apiService.postData(url,mBody);
+            call = apiService.postData(url,SOS.toString());
         }else{
-            call = apiService.postData(url,headers,mBody);
+            call = apiService.postData(url,headers,SOS.toString());
         }
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -526,22 +518,19 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     }
 
 
-    private void locationPost(String baseUrl, String latitude,String longitude){
+    private void locationPost(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
-        HashMap<String,String> body = new HashMap<>();
-        body.put("latitude",latitude);
-        body.put("longitude",longitude);
-
-
         JSONObject jsonLocation = null;
         try {
             jsonLocation = jsonParse("locationPost");
             if(jsonLocation != null){
-                jsonLocation.getJSONObject("args").put("location",body);
+                jsonLocation.getJSONObject("args").put("lat",location.getLatitude());
+                jsonLocation.getJSONObject("args").put("lng",location.getLongitude());
+
             }else{
                 return;
             }
@@ -550,15 +539,12 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        HashMap<String,String> mBody = new HashMap<>();
-        mBody.put("data",jsonLocation.toString());
-
 
         Call<ResponseBody> call;
         if (headers == null){
-            call = apiService.postData(url,mBody);
+            call = apiService.postData(url,jsonLocation.toString());
         }else{
-            call = apiService.postData(url,headers,mBody);
+            call = apiService.postData(url,headers,jsonLocation.toString());
         }
 
         call.enqueue(new Callback<ResponseBody>() {
@@ -578,36 +564,22 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             }
         });
     }
-
-
+    
     private void gpsClosed(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
-
-
+        
         JSONObject gpsClosed = null;
-        try {
-            gpsClosed = jsonParse("gpsClosed");
-            if(gpsClosed != null){
-                gpsClosed.getJSONObject("args").put("location","null");
-            }else{
-                return;
-            }
 
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        HashMap<String,String> mBody = new HashMap<>();
-        mBody.put("data",gpsClosed.toString());
-
+        gpsClosed = jsonParse("gpsClosed");
+        
         Call<ResponseBody> call;
         if (headers == null){
-            call = apiService.postData(url,mBody);
+            call = apiService.postData(url,gpsClosed.toString());
         }else{
-            call = apiService.postData(url,headers,mBody);
+            call = apiService.postData(url,headers,gpsClosed.toString());
         }
 
         call.enqueue(new Callback<ResponseBody>() {
@@ -637,23 +609,13 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         JSONObject mockLocation = null;
 
-        try {
-            mockLocation = jsonParse("mockLocation");
-            if(mockLocation != null){
-                mockLocation.getJSONObject("args").put("location","null");
-            }else{
-                return;
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        HashMap<String,String> mBody = new HashMap<>();
-        mBody.put("data",mockLocation.toString());
+        mockLocation = jsonParse("mockLocation");
+
         Call<ResponseBody> call;
         if (headers == null){
-            call = apiService.postData(url,mBody);
+            call = apiService.postData(url,mockLocation.toString());
         }else{
-            call = apiService.postData(url,headers,mBody);
+            call = apiService.postData(url,headers,mockLocation.toString());
         }
 
         call.enqueue(new Callback<ResponseBody>() {
