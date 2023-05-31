@@ -39,6 +39,10 @@ interface BackgroundService {
         callback:()=>void,
         fallback:(error:Error)=>void,
     ):void,
+    checkService(
+        callback:()=>void,
+        fallback:(error:Error)=>void,
+    ):void,
 }
 
 type BackgroundServiceBody={
