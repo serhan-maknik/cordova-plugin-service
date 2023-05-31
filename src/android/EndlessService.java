@@ -157,9 +157,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         }
         // by returning this we make sure the service is restarted if the system kills the service
 
-        if(isServiceStarted){
-            startForeground(1, builtNotification());
-        }
         return START_STICKY;
     }
 
@@ -280,6 +277,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     }
 
     public Notification builtNotification() {
+
        String title = TITLE;
        String body = BODY;
         if(notification != null){
@@ -358,6 +356,8 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
     private void startService(){
         if (isServiceStarted) return;
+
+        startForeground(1, builtNotification());
 
         if(!startToast.isEmpty()){
             Toast.makeText(this, startToast, Toast.LENGTH_SHORT).show();
@@ -534,8 +534,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             }else{
                 return;
             }
-
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -564,7 +562,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             }
         });
     }
-    
+
     private void gpsClosed(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
