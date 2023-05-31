@@ -11,4 +11,7 @@ module.exports={
     stop:(successCallback,errorCallback)=>{
         exec(successCallback,errorCallback,"BackgroundService","stopService",[]);
     },
+    checkService:(successCallback,errorCallback)=>{
+        exec(successCallback,errorCallback,"BackgroundService","serviceisRunning",[]);
+    },
 }

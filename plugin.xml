@@ -20,6 +20,7 @@
            <application android:usesCleartextTraffic="true" />
         </edit-config> 
 		<config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
             <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
             <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -47,6 +48,7 @@
         <source-file src="src/android/ServiceApi.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/CurrentLocationListener.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/DefaultString.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/NetworkUtils.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
         <source-file src="src/android/raw/beep.mp3" target-dir="app/src/main/res/raw" />
     </platform>

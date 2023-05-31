@@ -94,6 +94,13 @@ public class BackgroundService extends CordovaPlugin {
 
             this.callbackFunction("message", callbackContext);
             return true;
+        }else if(action.equals("serviceisRunning")){
+            if(pref.getServiceState() == ServiceState.STARTED){
+                callbackContext.success("true");
+            }else{
+                callbackContext.success("false");
+            }
+            return true;
         }
         return false;
     }

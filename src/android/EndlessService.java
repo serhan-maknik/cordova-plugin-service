@@ -101,6 +101,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         params = intent.getStringExtra("params");
 
         if(!isServiceStarted){
+           
             shakeDedector();
             checkGps();
             currentLocationListener = CurrentLocationListener.getInstance(getApplicationContext());
@@ -245,6 +246,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                     locationPost(parseUrl(url));
                 }
                 locationHandler.postDelayed(runnable, locationInterval);
+                Log.d("SERSER","latitutde: "+location.getLatitude());
             }
         };
     }
@@ -290,7 +292,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         assert notificationManager != null;
 
         NotificationCompat.Builder builder = null;
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
@@ -459,6 +460,10 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
 
     private Retrofit retrofitConf(String baseUrl){
+        if (!cordova.plugin.service.NetworkUtils.isNetworkAvailable(getApplicationContext())) {
+            return null;
+        }
+
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
@@ -478,14 +483,18 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private void shakeRequest(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
+        if(retrofit == null)return;
+
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
         JSONObject SOS = null;
         try {
             SOS = jsonParse("SOS");
             if(SOS != null){
-                SOS.getJSONObject("args").put("lat",location.getLatitude());
-                SOS.getJSONObject("args").put("lng",location.getLongitude());
+                if(location != null){
+                    SOS.getJSONObject("args").put("lat",location.getLatitude());
+                    SOS.getJSONObject("args").put("lng",location.getLongitude());
+                }
             }else{
                 return;
             }
@@ -521,6 +530,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private void locationPost(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
+        if(retrofit == null) return;
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
@@ -566,6 +576,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private void gpsClosed(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
+        if(retrofit == null)return;
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
@@ -602,6 +613,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private void mockLocationPost(String baseUrl){
 
         Retrofit retrofit = retrofitConf(baseUrl);
+        if(retrofit == null)return;
 
         cordova.plugin.service.ServiceApi apiService = retrofit.create(cordova.plugin.service.ServiceApi.class);
 
