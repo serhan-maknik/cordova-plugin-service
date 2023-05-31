@@ -11,7 +11,7 @@
 
 <button onclick="start()">Start</button>
 <button onclick="stop()">Stop</button>
-
+<button onclick="check()">Check</button>
 ```
 
 ## javascript
@@ -105,5 +105,14 @@ function stop(){
     function(a){
         console.log(a);
     })
+}
+
+ function check(){
+      BackgroundService.checkService(
+      function(data){
+        console.log(data);
+      },function(data){
+          console.log(data);
+      })
 }
 ```
