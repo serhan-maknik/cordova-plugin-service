@@ -1,6 +1,8 @@
 package cordova.plugin.service;
 
 
+import static com.google.android.gms.location.LocationRequest.Builder.IMPLICIT_MIN_UPDATE_INTERVAL;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -22,6 +24,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -49,7 +52,8 @@ public class CurrentLocationListener {
         }
         return instance;
     }
-    public void setListener(LocationListener listener){
+
+    public void setListener(LocationListener listener) {
         this.mListener = listener;
     }
 
@@ -65,20 +69,45 @@ public class CurrentLocationListener {
         mLocationRequest.setFastestInterval(1500);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
+      /*  mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1500)
+                .setWaitForAccurateLocation(false)
+                .setMinUpdateIntervalMillis(IMPLICIT_MIN_UPDATE_INTERVAL)
+                .setMaxUpdateDelayMillis(3000)
+                .build();*/
+
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+
+            return;
+        }
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+
+    }
+
+    @SuppressLint("MissingPermission")
+    public void startLocation() {
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setInterval(3000);
+        mLocationRequest.setFastestInterval(1500);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+      /*  mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1500)
+                .setWaitForAccurateLocation(false)
+                .setMinUpdateIntervalMillis(IMPLICIT_MIN_UPDATE_INTERVAL)
+                .setMaxUpdateDelayMillis(3000)
+                .build();*/
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
             return;
         }
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
     }
-
+    @SuppressLint("SuspiciousIndentation")
     public void stopLocation(){
+        if (mLocationCallback != null)
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+    }
+    public void destroyLocation(){
         if (mLocationCallback != null)
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         instance = null;
