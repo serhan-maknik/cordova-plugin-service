@@ -101,7 +101,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         params = intent.getStringExtra("params");
 
         if(!isServiceStarted){
-           
             shakeDedector();
             checkGps();
             currentLocationListener = CurrentLocationListener.getInstance(getApplicationContext());
@@ -191,7 +190,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             gpsClosed(parseUrl(url));
            // gpsClosedNotification();
             gpsClosedNotification(this,"GPS","CLOSED");
-            setSound();
+            setSound(4);
             isGpsEnable = false;
         } else {
             // Location is turned ON!
@@ -202,6 +201,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
 
     private void shakeDedector(){
+
         ShakeOptions options = new ShakeOptions()
                 .background(true)
                 .interval(1000)
@@ -214,10 +214,13 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
                 @Override
                 public void onShake() {
-                    shakeRequest(parseUrl(url));
+                    setSound(3);
+                    isShake = true;
+                    currentLocationListener.startLocation();
                 }
             });
     }
+
 
     public void vibrate(){
         // this is the only type of the vibration which requires system version Oreo (API 26)
@@ -230,9 +233,10 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             // it is safe to cancel other vibrations currently taking place
             vibrator.cancel();
             vibrator.vibrate(vibrationEffect1);
-        }
-    }
 
+        }
+
+    }
 
     private Handler locationHandler;
     private Runnable runnable;
@@ -243,10 +247,10 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             @Override
             public void run() {
                 if(checkGps()){
-                    locationPost(parseUrl(url));
+                    currentLocationListener.startLocation();
                 }
                 locationHandler.postDelayed(runnable, locationInterval);
-                Log.d("SERSER","latitutde: "+location.getLatitude());
+
             }
         };
     }
@@ -259,23 +263,29 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         if(locationHandler!=null)
            locationHandler.removeCallbacks(runnable);
     }
-
-
+    
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
 
     }
     boolean isFirst = true;
+    boolean isShake = false;
     @Override
     public void onLocationChanged(Location location) {
         this.location = location;
+        currentLocationListener.stopLocation();
         if(isFirst){
             mLocationHandler();
             startHandler();
             isFirst = false;
         }
-        Log.d("SERSER","latitude: "+location.getLatitude());
+        if(isShake){
+            shakeRequest(parseUrl(url));
+            isShake = false;
+            return;
+        }
+        locationPost(parseUrl(url));
     }
 
     public Notification builtNotification() {
@@ -298,7 +308,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel notificationChannel =
                     new NotificationChannel("ID", "Background", importance);
-
 
             notificationManager.createNotificationChannel(notificationChannel);
             builder = new NotificationCompat.Builder(this, notificationChannel.getId());
@@ -381,7 +390,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             Toast.makeText(this, stopToast, Toast.LENGTH_SHORT).show();
         }
         stopHandler();
-        currentLocationListener.stopLocation();
+        currentLocationListener.destroyLocation();
         try {
             if(wakeLock.isHeld()){
                 wakeLock.release();
@@ -421,7 +430,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private Handler soundHandler;
     private Runnable soundRunnable;
     private int count = 0;
-    private void setSound(){
+    private void setSound(int _count){
         MediaPlayer mp = MediaPlayer.create(this, getResources().getIdentifier("beep", "raw", getPackageName()));
 
         soundHandler = new Handler(Looper.getMainLooper());
@@ -429,7 +438,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             @Override
             public void run() {
                 mp.start();
-                if(count < 4){
+                if(count < _count){
                     soundHandler.postDelayed(soundRunnable, 1200);
                     count++;
                     return;
@@ -520,6 +529,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             }
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+
                 // İstek başarısız olduysa yapılacak işlemler
 
             }
@@ -558,6 +568,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
                 if (response.isSuccessful()) {
 
                 } else {
@@ -569,6 +580,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 // İstek başarısız olduysa yapılacak işlemler
+
             }
         });
     }
