@@ -75,6 +75,7 @@ public class BackgroundService extends CordovaPlugin {
     private cordova.plugin.service.ServiceTracker pref;
     private CallbackContext callbackContext;
     private String message = null;
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         pref = new cordova.plugin.service.ServiceTracker(cordova.getActivity());
@@ -87,11 +88,11 @@ public class BackgroundService extends CordovaPlugin {
             JSONObject permissions = data.optJSONObject("permissions");
             parseJson(permissions);
             batteryOptimization();
+
             return true;
         }
         else if(action.equals("stopService")){
             actionOnService(Actions.STOP);
-
             this.callbackFunction("message", callbackContext);
             return true;
         }else if(action.equals("serviceisRunning")){
@@ -163,6 +164,7 @@ public class BackgroundService extends CordovaPlugin {
     }
 
     private void checkPermission() {
+       
 
        if (ContextCompat.checkSelfPermission(cordova.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
           
@@ -177,8 +179,12 @@ public class BackgroundService extends CordovaPlugin {
                     // Ask for Background Location Permission
                     askPermissionForBackgroundUsage();
                 }
+            }else{
+                actionOnService(Actions.START);
+                this.callbackFunction(message, callbackContext);
             }
         } else {
+           Log.d("SERSER","askForLocationPermission()");
             // Fine Location Permission is not granted so ask for permission
             askForLocationPermission();
         }
@@ -274,7 +280,7 @@ public class BackgroundService extends CordovaPlugin {
     }
 
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
-
+    
         if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // User granted location permission
@@ -288,6 +294,9 @@ public class BackgroundService extends CordovaPlugin {
                         // Ask for Background Location Permission
                         askPermissionForBackgroundUsage();
                     }
+                }else{
+                    actionOnService(Actions.START);
+                    this.callbackFunction(message, callbackContext);
                 }
             } else {
                 // User denied location permission
@@ -309,6 +318,7 @@ public class BackgroundService extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) {
             if (resultCode == RESULT_OK) {
                 if(checkGps()){
@@ -326,8 +336,8 @@ public class BackgroundService extends CordovaPlugin {
                      alertDialog(enableGpsTitle,enableGpsBody,enableGpsButton,GPS_ENABLE);
                  }
         }else if(requestCode == GPS_ENABLED_MANUALLY){
-                    checkPermission();
 
+               checkPermission();
         }
     }
 
