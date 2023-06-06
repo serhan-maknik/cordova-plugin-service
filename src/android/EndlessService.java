@@ -214,7 +214,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
                 @Override
                 public void onShake() {
-                    setSound(3);
+                    setSound(1);
                     isShake = true;
                     currentLocationListener.startLocation();
                 }
