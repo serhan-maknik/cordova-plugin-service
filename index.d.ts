@@ -39,8 +39,11 @@ interface BackgroundService {
         callback:()=>void,
         fallback:(error:Error)=>void,
     ):void,
-    checkService(
-        callback:()=>void,
+
+    checkStatus(
+        callback:(status:{
+            isRunning:boolean
+        })=>void,
         fallback:(error:Error)=>void,
     ):void,
 }
