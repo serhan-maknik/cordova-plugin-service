@@ -437,8 +437,9 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         soundRunnable = new Runnable() {
             @Override
             public void run() {
-                mp.start();
+                
                 if(count < _count){
+                    mp.start();
                     soundHandler.postDelayed(soundRunnable, 1200);
                     count++;
                     return;
