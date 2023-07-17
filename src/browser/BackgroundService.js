@@ -7,4 +7,7 @@ module.exports={
     stop:()=>{
         console.log("BackgroundService does not support the browser platform");
     },
+    checkStatus:()=>{
+        console.log("BackgroundService does not support the browser platform"); 
+    },
 }
