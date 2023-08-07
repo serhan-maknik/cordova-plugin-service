@@ -14,4 +14,7 @@ module.exports={
     checkStatus:(successCallback,errorCallback)=>{
         exec(successCallback,errorCallback,"BackgroundService","serviceisRunning",[]);
     },
+    checkShake:(successCallback,errorCallback)=>{
+        exec(successCallback,errorCallback,"BackgroundService","checkShake",[]);
+    },
 }

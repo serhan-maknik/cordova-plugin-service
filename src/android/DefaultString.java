@@ -13,7 +13,14 @@ public class DefaultString {
     public static final String fLocationBody = "GPS permission is required. Go to settings and enable the permission.";
     public static final String fLocationButton = "Settings";
 
-    public static final String bLocationTitle = "Background Location Permission";
-    public static final String bLocationBody = "Background Application Permit Required!, Always allow on the next screen";
-    public static final String bLocationButton = "Settings";
+    public static final String bLocationTitle = "Allow background permissions";
+    public static final String bLocationBody = "Change your location settings to 'Allow all the time' to try out background tracking for when a user may not have the app open";
+    public static final String bLocationPositiveButton = "Allow background permission";
+    public static final String bLocationNegativeButton = "Not now Serhan";
+
+    public static final String cancelShakeTitle = "SOS";
+    public static final String cancelShakeBody = "Emergency message activated";
+    public static final String cancelRemainingTime = "Remaining time";
+    public static final String cancelShakeButton = "Cancel";
+    public static final int cancelDuration = 10;
 }

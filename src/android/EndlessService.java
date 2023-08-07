@@ -42,6 +42,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 
 import cordova.plugin.service.BackgroundService;
@@ -57,8 +58,8 @@ import safety.com.br.android_shake_detector.core.ShakeCallback;
 import safety.com.br.android_shake_detector.core.ShakeDetector;
 import safety.com.br.android_shake_detector.core.ShakeOptions;
 import cordova.plugin.service.CurrentLocationListener;
-
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import cordova.plugin.service.ServiceTracker;
 public class EndlessService extends Service implements  CurrentLocationListener.LocationListener, CurrentLocationListener.MockListener {
     boolean isServiceStarted = false;
     PowerManager pm ;
@@ -88,17 +89,26 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private String startToast = "";
     private String stopToast = "" ;
     private CurrentLocationListener currentLocationListener;
-
+    private cordova.plugin.service.CancelShakePref shakePref;
     private int locationInterval = 5*60*1000;
+    private LocalBroadcastManager broadcastManager;
+
+    private ServiceTracker tracker;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
+    boolean hasExtra = false;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        params = intent.getStringExtra("params");
+        tracker = new ServiceTracker(this);
+        shakePref = new cordova.plugin.service.CancelShakePref(getBaseContext());
+        Log.d("SERSER","intent: "+intent);
+        if(intent != null){
+            hasExtra = true;
+        }
+        params = hasExtra ? intent.getStringExtra("params") : tracker.getParams();
 
         if(!isServiceStarted){
             shakeDedector();
@@ -122,8 +132,8 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                 }
                 JSONObject JsonBody = data.optJSONObject("body");
                 if(JsonBody != null){
-                   SOS = JsonBody.optJSONObject("SOS");
-                   jsonLocation = JsonBody.optJSONObject("locationPost");
+                    SOS = JsonBody.optJSONObject("SOS");
+                    jsonLocation = JsonBody.optJSONObject("locationPost");
                 }
                 JSONObject jsonNotification = data.optJSONObject("notification");
                 if(jsonNotification != null){
@@ -188,7 +198,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         if (mode == Settings.Secure.LOCATION_MODE_OFF) {
             // Location is turned OFF!
             gpsClosed(parseUrl(url));
-           // gpsClosedNotification();
+            // gpsClosedNotification();
             gpsClosedNotification(this,"GPS","CLOSED");
             setSound(4);
             isGpsEnable = false;
@@ -209,33 +219,52 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                 .sensibility(5f);
         shakeDetector = new ShakeDetector(options);
 
-            shakeDetector.stopShakeDetector(getApplicationContext());
-            //     shakeDetector.destroy(getApplicationContext());
-            shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
-                @Override
-                public void onShake() {
-                    setSound(1);
-                    isShake = true;
-                    currentLocationListener.startLocation();
-                }
-            });
+        shakeDetector.stopShakeDetector(getApplicationContext());
+        //     shakeDetector.destroy(getApplicationContext());
+        shakeDetector = new ShakeDetector(options).start(getApplicationContext(), new ShakeCallback() {
+            @Override
+            public void onShake() {
+                vibrate();
+                shakePref.setShakeStatus(true);
+                Log.d("SERSER","shake status: "+shakePref.getShakeStatus());
+
+                checkShake();
+            }
+        });
     }
 
+    private Handler shakeHandler;
+    private Runnable sRunnable;
+    public void checkShake() {
+        JSONObject cancelShake = new JSONObject();
+        try {
+            cancelShake.put("action","shake");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        sendParameterToActivity(cancelShake.toString());
 
+        shakeHandler = new Handler(Looper.getMainLooper());
+        sRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if(shakePref.getShakeStatus()){
+                    currentLocationListener.startLocation();
+                }
+            }
+        };
+        shakeHandler.postDelayed(sRunnable, 10000);
+    }
     public void vibrate(){
         // this is the only type of the vibration which requires system version Oreo (API 26)
         final VibrationEffect vibrationEffect1;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-
             // this effect creates the vibration of default amplitude for 1000ms(1 sec)
             vibrationEffect1 = VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE);
-
             // it is safe to cancel other vibrations currently taking place
             vibrator.cancel();
             vibrator.vibrate(vibrationEffect1);
-
         }
-
     }
 
     private Handler locationHandler;
@@ -250,7 +279,6 @@ public class EndlessService extends Service implements  CurrentLocationListener.
                     currentLocationListener.startLocation();
                 }
                 locationHandler.postDelayed(runnable, locationInterval);
-
             }
         };
     }
@@ -261,16 +289,15 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
     public void stopHandler() {
         if(locationHandler!=null)
-           locationHandler.removeCallbacks(runnable);
+            locationHandler.removeCallbacks(runnable);
     }
-    
+
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
 
     }
     boolean isFirst = true;
-    boolean isShake = false;
     @Override
     public void onLocationChanged(Location location) {
         this.location = location;
@@ -280,9 +307,18 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             startHandler();
             isFirst = false;
         }
-        if(isShake){
+        if(shakePref.getShakeStatus()!= false){
+            shakePref.setShakeStatus(false);
+            JSONObject cancelShake = new JSONObject();
+            try {
+                cancelShake.put("action","sended");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            //  sendParameterToActivity(cancelShake.toString());
+
             shakeRequest(parseUrl(url));
-            isShake = false;
+            shakePref.setShakeStatus(false);
             return;
         }
         locationPost(parseUrl(url));
@@ -290,8 +326,8 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
     public Notification builtNotification() {
 
-       String title = TITLE;
-       String body = BODY;
+        String title = TITLE;
+        String body = BODY;
         if(notification != null){
             title = notification.containsKey("title") ? notification.get("title") : title;
             body = notification.containsKey("body") ? notification.get("body"): body;
@@ -374,7 +410,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         }
         Log.d("SERVICE","Starting the foreground service task");
         isServiceStarted = true;
-        cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
+
         tracker.setServiceState(cordova.plugin.service.ServiceState.STARTED);
 
         pm= (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -410,6 +446,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     @Override
     public void onCreate() {
         super.onCreate();
+        broadcastManager = LocalBroadcastManager.getInstance(this);
     }
 
 
@@ -420,7 +457,15 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         cordova.plugin.service.ServiceTracker tracker = new cordova.plugin.service.ServiceTracker(this);
         tracker.setServiceState(cordova.plugin.service.ServiceState.STOPPED);
     }
+    private void sendParameterToActivity(String parameter) {
+        long timestamp = new Date().getTime();
+        Intent intent = new Intent("cancel-shake-action");
+        intent.putExtra("parameter", parameter);
+        intent.putExtra("time",timestamp + 10 * 1000);
+        tracker.setTime(timestamp + 10 * 1000);
+        broadcastManager.sendBroadcast(intent);
 
+    }
     @Override
     public void onMockLocationsDetected() {
         mockLocationPost(parseUrl(url));
@@ -437,14 +482,14 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         soundRunnable = new Runnable() {
             @Override
             public void run() {
-                
+
                 if(count < _count){
                     mp.start();
                     soundHandler.postDelayed(soundRunnable, 1200);
                     count++;
                     return;
                 }
-               count = 0;
+                count = 0;
             }
         };
         soundHandler.post(soundRunnable);
@@ -522,7 +567,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    vibrate();
+                    setSound(3);
                 } else {
                     // Hata durumlarında yapılacak işlemler
 

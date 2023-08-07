@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 enum ServiceState {
     STARTED,
     STOPPED,
@@ -46,5 +49,36 @@ public class ServiceTracker {
         String value = pref.getString(key,ServiceState.STOPPED.name());
         Log.d("SERSER","getServiceState value: "+value);
         return ServiceState.valueOf(value);
+    }
+
+    public void setInitData(String data){
+        editor.putString("main_data", data);
+        // commit changes
+        editor.commit();
+    }
+
+    public JSONObject getPermissionText(){
+        String value = pref.getString("main_data",null);
+        JSONObject jobj = null;
+        try {
+            JSONObject data = new JSONObject(value);
+            jobj = data.optJSONObject("data");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jobj;
+    }
+
+    public String getParams(){
+        return pref.getString("main_data",null);
+    }
+
+    public void setTime(long time){
+        editor.putLong("time", time);
+        // commit changes
+        editor.commit();
+    }
+    public long getTime(){
+        return pref.getLong("time",0);
     }
 }

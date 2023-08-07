@@ -11,6 +11,10 @@
     </js-module>
 
     <platform name="android">
+        <feature name="BackgroundService">
+            <param name="android-package" value="cordova.plugin.service.BackgroundService" />
+            <param name="onload" value="true" />
+        </feature>
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="BackgroundService">
                 <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
@@ -49,8 +53,23 @@
         <source-file src="src/android/CurrentLocationListener.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/DefaultString.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
         <source-file src="src/android/NetworkUtils.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/CancelShakePref.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/AlarmReceiver.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/MyWorker.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/PrefUtil.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/AutoStartHelper.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+        <source-file src="src/android/CancelShakeDialog.java" target-dir="src/cordova/plugin/service/BackgroundService"/>
+
+
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
         <source-file src="src/android/raw/beep.mp3" target-dir="app/src/main/res/raw" />
+        <source-file src="src/android/layout/dialog.xml" target-dir="app/src/main/res/layout" />
+        <source-file src="src/android/layout/bottom_layout.xml" target-dir="app/src/main/res/layout" />
+        <source-file src="src/android/layout/background_permission_fragment.xml" target-dir="app/src/main/res/layout" />
+        <source-file src="src/android/drawable/button_border.xml" target-dir="app/src/main/res/drawable" /> 
+        <source-file src="src/android/drawable/replay.xml" target-dir="app/src/main/res/drawable" />
+        <source-file src="src/android/drawable/location_permis5.jpg" target-dir="app/src/main/res/drawable" />
+        <source-file src="src/android/values/styles.xml" target-dir="app/src/main/res/values" />
     </platform>
 
     <platform name="ios">

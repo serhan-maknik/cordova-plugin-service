@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:background="#fff"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="1100px">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="fitStart"
+                android:src="@drawable/location_permis5" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_marginTop="20px"
+        android:layout_marginLeft="80px"
+        android:layout_marginRight="80px"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:layout_centerHorizontal="true"
+            android:id="@id/title"
+            android:textSize="45px"
+            android:textColor="#173c54"
+            android:textStyle="bold"
+            android:text="Allow background permissions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:textAlignment="center"
+            android:id="@+id/content"
+            android:layout_below="@+id/title"
+            android:layout_marginTop="30px"
+            android:layout_centerHorizontal="true"
+
+            android:textColor="#707b81"
+            android:lineSpacingExtra="8dp"
+            android:textSize="40px"
+            android:text="Change your location settings to 'Allow all the time' to try out background tracking for when a user may not have the app open"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
+        <Button
+            android:id="@+id/allowBtn"
+            android:background="#0352c9"
+            android:text="Allow background permission"
+            android:textColor="#fff"
+
+            android:textAllCaps="false"
+            android:layout_above="@+id/cancelBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <Button
+
+            android:id="@+id/cancelBtn"
+            android:text="Not now"
+            android:textColor="#707b81"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:layout_marginTop="30px"
+            android:layout_marginBottom="40px"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/button_border"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
+
+</LinearLayout>
