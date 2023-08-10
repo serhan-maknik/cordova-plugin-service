@@ -146,6 +146,21 @@ public class BackgroundService extends CordovaPlugin {
                 callbackContext.success("false");
             }
             return true;
+        }else if(action.equals("locationInterval")){
+
+            String message = args.getString(0);
+            JSONObject data = new JSONObject(message);
+
+            Intent i = new Intent(cordova.getContext(), cordova.plugin.service.EndlessService.class);
+            i.setAction(Actions.START.name());
+            i.putExtra("locationInfo",message);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                cordova.getContext().startForegroundService(i);
+                return true;
+            }
+            cordova.getContext().startService(i);
+            return true;
         }
         return false;
     }

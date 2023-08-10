@@ -104,8 +104,11 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     public int onStartCommand(Intent intent, int flags, int startId) {
         tracker = new ServiceTracker(this);
         shakePref = new cordova.plugin.service.CancelShakePref(getBaseContext());
-        Log.d("SERSER","intent: "+intent);
         if(intent != null){
+            if(intent.hasExtra("locationInfo")){
+                changeLocationInterval(intent);
+                return START_STICKY;
+            }
             hasExtra = true;
         }
         params = hasExtra ? intent.getStringExtra("params") : tracker.getParams();
@@ -169,7 +172,19 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         return START_STICKY;
     }
-
+ private void changeLocationInterval(Intent intent){
+        String locationObj =  intent.getStringExtra("locationInfo");
+        try {
+            JSONObject jsonObject =  new JSONObject(locationObj);
+            JSONObject data = jsonObject.getJSONObject("data");
+            locationInterval = data.getInt("interval");
+            stopHandler();
+            mLocationHandler();
+            startHandler();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
     private JSONObject jsonParse(String name){
         JSONObject returnJson = null;
