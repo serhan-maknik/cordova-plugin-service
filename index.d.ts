@@ -46,6 +46,17 @@ interface BackgroundService {
         })=>void,
         fallback:(error:Error)=>void,
     ):void,
+
+    changeLocationInterval(
+        options:{
+            /**
+             * in milliseconds
+             */
+            interval:number,
+        },
+        callback:()=>void,
+        fallback:(error:Error)=>void,
+    ):void,
 }
 
 type BackgroundServiceBody={
