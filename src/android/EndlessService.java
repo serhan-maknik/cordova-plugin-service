@@ -91,6 +91,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private CurrentLocationListener currentLocationListener;
     private cordova.plugin.service.CancelShakePref shakePref;
     private int locationInterval = 5*60*1000;
+    private int intervalDuration = 10*60*1000;
     private LocalBroadcastManager broadcastManager;
 
     private ServiceTracker tracker;
@@ -178,6 +179,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             JSONObject jsonObject =  new JSONObject(locationObj);
             JSONObject data = jsonObject.getJSONObject("data");
             locationInterval = data.getInt("interval");
+            intervalDuration = data.getInt("intervalDuration");
             stopHandler();
             mLocationHandler();
             startHandler();
@@ -306,6 +308,22 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         if(locationHandler!=null)
             locationHandler.removeCallbacks(runnable);
     }
+
+
+    private Handler mLocationIntervalHandler;
+    private Runnable mLocationIntervalRunner;
+
+    public void backOriginalInterval() {
+        mLocationIntervalHandler = new Handler(Looper.getMainLooper());
+        mLocationIntervalRunner = new Runnable() {
+            @Override
+            public void run() {
+                locationInterval = intervalDuration;
+            }
+        };
+        mLocationIntervalHandler.postDelayed(mLocationIntervalRunner,intervalDuration);
+    }
+
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
