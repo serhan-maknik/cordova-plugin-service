@@ -183,6 +183,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             stopHandler();
             mLocationHandler();
             startHandler();
+            backOriginalInterval();
         } catch (JSONException e) {
             e.printStackTrace();
         }
