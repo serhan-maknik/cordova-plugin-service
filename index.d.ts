@@ -52,8 +52,8 @@ interface BackgroundService {
             /**
              * in milliseconds
              */
-            interval:number,
-            intervalDuration:number,
+            interruptionInterval:number,
+            interruptionDuration:number,
         },
         callback:()=>void,
         fallback:(error:Error)=>void,
