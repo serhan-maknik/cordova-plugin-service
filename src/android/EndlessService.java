@@ -90,7 +90,9 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     private String stopToast = "" ;
     private CurrentLocationListener currentLocationListener;
     private cordova.plugin.service.CancelShakePref shakePref;
-    private int locationInterval = 5*60*1000;
+    private int locationInterval = 5*60*1000; //locationInterval: App start this value and gets location information every 5 minutes
+    private int interruptionInterval = 10*1000; // interruptionInterval: Used to obtain location information for short periods of time.
+    private int interruptionDuration = 10*60*1000; // interruptionDuration: Specifies how long 'interruptionInterval' should remain active.
     private LocalBroadcastManager broadcastManager;
 
     private ServiceTracker tracker;
@@ -104,8 +106,11 @@ public class EndlessService extends Service implements  CurrentLocationListener.
     public int onStartCommand(Intent intent, int flags, int startId) {
         tracker = new ServiceTracker(this);
         shakePref = new cordova.plugin.service.CancelShakePref(getBaseContext());
-        Log.d("SERSER","intent: "+intent);
         if(intent != null){
+            if(intent.hasExtra("locationInfo")){
+                changeLocationInterval(intent);
+                return START_STICKY;
+            }
             hasExtra = true;
         }
         params = hasExtra ? intent.getStringExtra("params") : tracker.getParams();
@@ -169,7 +174,23 @@ public class EndlessService extends Service implements  CurrentLocationListener.
 
         return START_STICKY;
     }
-
+     private void changeLocationInterval(Intent intent){
+        String locationObj =  intent.getStringExtra("locationInfo");
+        try {
+            JSONObject jsonObject =  new JSONObject(locationObj);
+            JSONObject data = jsonObject.getJSONObject("data");
+            locationInterval = data.getInt("interruptionInterval");
+            interruptionDuration = data.getInt("interruptionDuration");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            locationInterval = interruptionInterval;
+        }finally {
+            stopHandler();
+            mLocationHandler();
+            startHandler();
+            backOriginalInterval();
+        }
+    }
 
     private JSONObject jsonParse(String name){
         JSONObject returnJson = null;
@@ -226,8 +247,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
             public void onShake() {
                 vibrate();
                 shakePref.setShakeStatus(true);
-                Log.d("SERSER","shake status: "+shakePref.getShakeStatus());
-
+              
                 checkShake();
             }
         });
@@ -291,6 +311,35 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         if(locationHandler!=null)
             locationHandler.removeCallbacks(runnable);
     }
+
+
+    private Handler mLocationIntervalHandler;
+    private Runnable mLocationIntervalRunner;
+
+     public void backOriginalInterval() {
+        mLocationIntervalHandler = new Handler(Looper.getMainLooper());
+        mLocationIntervalRunner = new Runnable() {
+            @Override
+            public void run() {
+               
+                if(params != null) {
+                    JSONObject message = null;
+                    try {
+                        message = new JSONObject(params);
+                        JSONObject data = message.getJSONObject("data");
+                        int _locationInterval = data.optInt("locationInterval");
+                        if (_locationInterval != 0) {
+                            locationInterval = _locationInterval;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        mLocationIntervalHandler.postDelayed(mLocationIntervalRunner,interruptionDuration);
+    }
+
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
