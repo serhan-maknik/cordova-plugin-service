@@ -135,7 +135,7 @@ function stop(){
 
 function changeInterval(){
         BackgroundService.changeLocationInterval({
-            interruptionInterval:10000 // milliseconds
+            interruptionInterval:10000, // milliseconds
             interruptionDuration: 60*1000 // milliseconds
         },
         function(a){},
