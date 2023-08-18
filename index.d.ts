@@ -16,6 +16,11 @@ interface BackgroundService {
              * geolocation refresh interval in milliseconds
              */
             locationInterval:number,
+            autoStartVideo:{
+                url?:string,
+                closeButton?:string,
+            }
+            
             notification?:{
                 title?:string,
                 body?:string,
@@ -23,6 +28,13 @@ interface BackgroundService {
             toast?:{
                 start?:string,
                 stop?:string
+            },
+            cancelShakeDialog: {
+                title?: string,
+                body?: string,
+                button?: string,
+                remainingTime?: string,
+                duration?: number //second
             },
             permissions?:{
                 batteryPermission?:BackgroundServicePermission,
