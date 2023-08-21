@@ -140,8 +140,10 @@ public class BackgroundService extends CordovaPlugin {
             return true;
         }else if(action.equals("serviceisRunning")){
             JSONObject data = pref.getPermissionText();
-            parseJson(data);
-            checkShake();
+            if(data!=null){
+                parseJson(data);
+                checkShake();
+            }
             if(pref.getServiceState() == ServiceState.STARTED){
                 callbackContext.success("true");
             }else{
