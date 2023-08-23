@@ -237,6 +237,12 @@ public class BackgroundService extends CordovaPlugin {
             cancelShakeParams.put("cancelDuration",cancelDuration);
             cancelShakeParams.put("cancelShakeButton",cancelShakeButton);
 
+        }else{
+            cancelShakeParams.put("cancelShakeTitle",cancelShakeTitle);
+            cancelShakeParams.put("cancelShakeBody",cancelShakeBody);
+            cancelShakeParams.put("remainingTime",cancelRemainingTime);
+            cancelShakeParams.put("cancelDuration",cancelDuration);
+            cancelShakeParams.put("cancelShakeButton",cancelShakeButton);
         }
 
         if(autoStartVideo != null){
