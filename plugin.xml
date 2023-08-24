@@ -23,9 +23,7 @@
                 <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
             </feature>
         </config-file>
-        <edit-config file="AndroidManifest.xml"  mode="merge" target="/manifest/application">
-           <application android:usesCleartextTraffic="true" />
-        </edit-config> 
+       
 		<config-file target="AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
