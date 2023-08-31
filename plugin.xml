@@ -23,8 +23,7 @@
                 <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
             </feature>
         </config-file>
-       </edit-config>
-           <edit-config file="AndroidManifest.xml"  mode="merge" target="/manifest/application">
+        <edit-config file="AndroidManifest.xml"  mode="merge" target="/manifest/application">
            <application android:usesCleartextTraffic="true" />
         </edit-config>
 		<config-file target="AndroidManifest.xml" parent="/*">
