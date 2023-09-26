@@ -11,7 +11,7 @@
 
 <button onclick="start()">Start</button>
 <button onclick="stop()">Stop</button>
-<button onclick="check()">Check</button>
+
 ```
 
 ## javascript
@@ -123,20 +123,11 @@ function stop(){
     })
 }
 
- function check(){
-      BackgroundService.checkService(
-      function(data){
-        console.log(data);
-      },function(data){
-          console.log(data);
-      })
-}
-
 
 function changeInterval(){
         BackgroundService.changeLocationInterval({
-            interval:10000 // milliseconds
-            intervalDuration: 60*1000 // milliseconds
+            interruptionInterval:10000, // milliseconds
+            interruptionDuration: 60*1000 // milliseconds
         },
         function(a){},
         function(b){})

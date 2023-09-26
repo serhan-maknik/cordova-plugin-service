@@ -61,8 +61,11 @@ public class ServiceTracker {
         String value = pref.getString("main_data",null);
         JSONObject jobj = null;
         try {
-            JSONObject data = new JSONObject(value);
-            jobj = data.optJSONObject("data");
+            if(value!=null){
+                JSONObject data = new JSONObject(value);
+                jobj = data.optJSONObject("data");
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -11,10 +11,13 @@
     </js-module>
 
     <platform name="android">
+        
         <feature name="BackgroundService">
             <param name="android-package" value="cordova.plugin.service.BackgroundService" />
             <param name="onload" value="true" />
         </feature>
+           
+
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="BackgroundService">
                 <param name="android-package" value="cordova.plugin.service.BackgroundService"/>
@@ -22,7 +25,7 @@
         </config-file>
         <edit-config file="AndroidManifest.xml"  mode="merge" target="/manifest/application">
            <application android:usesCleartextTraffic="true" />
-        </edit-config> 
+        </edit-config>
 		<config-file target="AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

@@ -105,6 +105,9 @@ public class BackgroundService extends CordovaPlugin {
     private String cancelRemainingTime = DefaultString.cancelRemainingTime;
     private int cancelDuration = DefaultString.cancelDuration;
 
+    private String videoUrl = DefaultString.autoStartVideoUrl;
+    private String closeButtonText = DefaultString.autoStartCloseButton;
+
     private cordova.plugin.service.ServiceTracker pref;
     private CallbackContext callbackContext;
     private String message = null;
@@ -113,8 +116,7 @@ public class BackgroundService extends CordovaPlugin {
     private Application app;
     private String package_name;
     private Resources resources;
-    private String videoUrl;
-    private String closeButtonText;
+
     private CancelShakeDialog dBottom;
     private HashMap<String, Object> cancelShakeParams = new HashMap<>();
     @Override
@@ -138,8 +140,10 @@ public class BackgroundService extends CordovaPlugin {
             return true;
         }else if(action.equals("serviceisRunning")){
             JSONObject data = pref.getPermissionText();
-            parseJson(data);
-            checkShake();
+            if(data!=null){
+                parseJson(data);
+                checkShake();
+            }
             if(pref.getServiceState() == ServiceState.STARTED){
                 callbackContext.success("true");
             }else{
@@ -169,13 +173,8 @@ public class BackgroundService extends CordovaPlugin {
             message = args.getString(0);
             JSONObject jsonObject  = new JSONObject(message);
             JSONObject data = jsonObject.optJSONObject("data");
-            JSONObject autoStartVideo = data.optJSONObject("autoStartVideo");
-            videoUrl = autoStartVideo.optString("url");
-            closeButtonText = autoStartVideo.optString("closeButton");
-
             parseJson(data);
             batteryOptimization();
-
             pref.setInitData(message);
     }
 
@@ -191,6 +190,8 @@ public class BackgroundService extends CordovaPlugin {
     private void parseJson(JSONObject data){
         JSONObject cancelShake = data.optJSONObject("cancelShakeDialog");
         JSONObject permissions = data.optJSONObject("permissions");
+        JSONObject autoStartVideo = data.optJSONObject("autoStartVideo");
+
         if(permissions!=null){
             JSONObject batteryPermission = permissions.optJSONObject("batteryPermission");
             JSONObject enableLocation = permissions.optJSONObject("enableLocation");
@@ -236,6 +237,18 @@ public class BackgroundService extends CordovaPlugin {
             cancelShakeParams.put("cancelDuration",cancelDuration);
             cancelShakeParams.put("cancelShakeButton",cancelShakeButton);
 
+        }else{
+            cancelShakeParams.put("cancelShakeTitle",cancelShakeTitle);
+            cancelShakeParams.put("cancelShakeBody",cancelShakeBody);
+            cancelShakeParams.put("remainingTime",cancelRemainingTime);
+            cancelShakeParams.put("cancelDuration",cancelDuration);
+            cancelShakeParams.put("cancelShakeButton",cancelShakeButton);
+        }
+
+        if(autoStartVideo != null){
+
+            videoUrl = autoStartVideo.optString( "url",videoUrl);
+            closeButtonText = autoStartVideo.optString("closeButton",closeButtonText);
         }
     }
     private void actionOnService(cordova.plugin.service.Actions action) {

@@ -23,4 +23,7 @@ public class DefaultString {
     public static final String cancelRemainingTime = "Remaining time";
     public static final String cancelShakeButton = "Cancel";
     public static final int cancelDuration = 10;
+
+    public static final String autoStartVideoUrl = "https://www.goonex.app/attachments/autostart__1691058086843.mp4";
+    public static final String autoStartCloseButton ="Close";
 }

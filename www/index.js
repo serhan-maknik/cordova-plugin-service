@@ -14,8 +14,12 @@ module.exports={
     checkStatus:(successCallback,errorCallback)=>{
         exec(successCallback,errorCallback,"BackgroundService","serviceisRunning",[]);
     },
-    checkShake:(successCallback,errorCallback)=>{
-        exec(successCallback,errorCallback,"BackgroundService","checkShake",[]);
+
+    changeLocationInterval:(data,successCallback,errorCallback)=>{
+        const obj={
+            data:data
+        };
+        exec(successCallback,errorCallback,"BackgroundService","locationInterval",[obj]);
     },
     changeLocationInterval:(data,successCallback,errorCallback)=>{
         const obj={

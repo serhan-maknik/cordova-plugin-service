@@ -414,7 +414,7 @@ public class EndlessService extends Service implements  CurrentLocationListener.
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, launchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_IMMUTABLE);
         builder.setContentIntent(contentIntent);
 
         Notification notification = builder.build();
